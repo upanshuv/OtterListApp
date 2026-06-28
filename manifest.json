@@ -1,7 +1,7 @@
 {
-  "name": "OtterList",
-  "short_name": "OtterList",
-  "description": "Your otter-themed task list with rocks, groups, and leaderboards",
+  "name": "OtterQuests",
+  "short_name": "OtterQuests",
+  "description": "Your otter-themed quest list with rocks, groups, and leaderboards",
   "start_url": "/",
   "display": "standalone",
   "orientation": "portrait",

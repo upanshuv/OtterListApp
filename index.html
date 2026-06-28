@@ -5,9 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="OtterList">
+<meta name="apple-mobile-web-app-title" content="OtterQuests">
 <meta name="theme-color" content="#3F8C5F" id="themeColorMeta">
-<title>OtterList</title>
+<title>OtterQuests</title>
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.x/tabler-icons.min.css">
@@ -73,19 +73,19 @@ button{cursor:pointer;font-family:inherit}
 .tog.on{background:var(--ac,#3F8C5F)}
 .tog-thumb{position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
 .tog.on .tog-thumb{left:21px}
-.task-row{display:flex;align-items:stretch;gap:10px;padding:11px 0;border-bottom:0.5px solid var(--border,rgba(0,0,0,.07));cursor:pointer;user-select:none}
-.task-bar{width:4px;border-radius:2px;flex-shrink:0}
-.task-icon{font-size:20px;align-self:center;flex-shrink:0}
-.task-title{font-size:15px;color:var(--tx,#1C1C1E);line-height:1.3}
-.task-title.done{text-decoration:line-through;color:var(--st,#7A7A7E)}
-.task-meta{display:flex;align-items:center;gap:6px;margin-top:3px;flex-wrap:wrap}
+.quest-row{display:flex;align-items:stretch;gap:10px;padding:11px 0;border-bottom:0.5px solid var(--border,rgba(0,0,0,.07));cursor:pointer;user-select:none}
+.quest-bar{width:4px;border-radius:2px;flex-shrink:0}
+.quest-icon{font-size:20px;align-self:center;flex-shrink:0}
+.quest-title{font-size:15px;color:var(--tx,#1C1C1E);line-height:1.3}
+.quest-title.done{text-decoration:line-through;color:var(--st,#7A7A7E)}
+.quest-meta{display:flex;align-items:center;gap:6px;margin-top:3px;flex-wrap:wrap}
 .cat-pill{font-size:10px;font-weight:500;background:rgba(0,0,0,.06);color:var(--st,#7A7A7E);padding:2px 7px;border-radius:20px}
 .day-nav{display:flex;align-items:center;justify-content:space-between;padding:0 16px 8px}
 .day-nav-btn{background:none;border:none;color:var(--tx,#1C1C1E);font-size:22px;padding:4px 8px;cursor:pointer}
 .week-strip{display:flex;padding:0 12px 8px}
 .week-cell{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer}
 .month-grid{display:grid;grid-template-columns:repeat(7,1fr);padding:0 12px}
-.add-task-btn{display:flex;align-items:center;justify-content:center;gap:6px;margin:10px 16px;padding:10px;border-radius:10px;background:rgba(0,0,0,.05);border:none;color:var(--ac,#3F8C5F);font-size:14px;font-weight:500;cursor:pointer;width:calc(100% - 32px)}
+.add-quest-btn{display:flex;align-items:center;justify-content:center;gap:6px;margin:10px 16px;padding:10px;border-radius:10px;background:rgba(0,0,0,.05);border:none;color:var(--ac,#3F8C5F);font-size:14px;font-weight:500;cursor:pointer;width:calc(100% - 32px)}
 .empty-state{text-align:center;padding:48px 32px;color:var(--st,#7A7A7E)}
 .empty-state i{font-size:40px;margin-bottom:10px;display:block}
 .shop-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 16px 16px}
@@ -105,7 +105,7 @@ button{cursor:pointer;font-family:inherit}
 </head>
 <body>
 <div id="app">
-  <div id="screen"><div class="spinner-wrap"><div class="spinner"></div><span>Loading OtterList…</span></div></div>
+  <div id="screen"><div class="spinner-wrap"><div class="spinner"></div><span>Loading OtterQuests…</span></div></div>
   <div id="tabbar" style="display:none">
     <button class="tab-btn active" id="tb-list" onclick="switchTab('list')"><i class="ti ti-checklist"></i>List</button>
     <button class="tab-btn" id="tb-shop" onclick="switchTab('shop')"><i class="ti ti-shopping-cart"></i>Shop</button>
@@ -132,9 +132,9 @@ import { getFirestore, doc, setDoc, getDoc, updateDoc,
 // ─────────────────────────────────────────────
 const firebaseConfig = {
   apiKey: "AIzaSyB-6fhgsx-mcxnjkaN-qE89wijdm0QFzgs",
-  authDomain: "otterlist-99628.firebaseapp.com",
-  projectId: "otterlist-99628",
-  storageBucket: "otterlist-99628.firebasestorage.app",
+  authDomain: "otterquests-99628.firebaseapp.com",
+  projectId: "otterquests-99628",
+  storageBucket: "otterquests-99628.firebasestorage.app",
   messagingSenderId: "990031384788",
   appId: "1:990031384788:web:1209f326544c69ac776b41",
 };
@@ -193,7 +193,7 @@ let shopCat       = 'theme';
 let groupListeners= {};         // code -> unsubscribe fn
 
 let S = {
-  tasks:[], groups:[], rocks:0, totalXP:0, xpToday:0, lastXPDate:'',
+  quests:[], groups:[], rocks:0, totalXP:0, xpToday:0, lastXPDate:'',
   ownedThemes:['white','cream','dark'], ownedIcons:['check'],
   equippedTheme:'white', equippedIcon:'check',
 };
@@ -243,18 +243,18 @@ async function saveProfile(){
   } catch(e){console.warn('profile save failed',e);}
 }
 
-// ─── FIRESTORE: TASKS ─────────────────────────────────────────────────────────
-async function fsAddTask(task){
+// ─── FIRESTORE: QUESTS ─────────────────────────────────────────────────────────
+async function fsAddQuest(quest){
   if(!currentUser) return;
-  await setDoc(doc(db,'users',currentUser.uid,'tasks',task.id),task);
+  await setDoc(doc(db,'users',currentUser.uid,'quests',quest.id),quest);
 }
-async function fsUpdateTask(task){
+async function fsUpdateQuest(quest){
   if(!currentUser) return;
-  await setDoc(doc(db,'users',currentUser.uid,'tasks',task.id),task);
+  await setDoc(doc(db,'users',currentUser.uid,'quests',quest.id),quest);
 }
-async function fsDeleteTask(taskId){
+async function fsDeleteQuest(questId){
   if(!currentUser) return;
-  await deleteDoc(doc(db,'users',currentUser.uid,'tasks',taskId));
+  await deleteDoc(doc(db,'users',currentUser.uid,'quests',questId));
 }
 
 // ─── FIRESTORE: GROUPS ───────────────────────────────────────────────────────
@@ -334,9 +334,9 @@ async function loadUserData(uid){
       }
     }
   }
-  // Load tasks
-  const tasksSnap=await getDocs(collection(db,'users',uid,'tasks'));
-  S.tasks=tasksSnap.docs.map(d=>({...d.data(),id:d.id}));
+  // Load quests
+  const questsSnap=await getDocs(collection(db,'users',uid,'quests'));
+  S.quests=questsSnap.docs.map(d=>({...d.data(),id:d.id}));
 }
 
 // ─── AUTH ─────────────────────────────────────────────────────────────────────
@@ -384,7 +384,7 @@ async function doSignOut(){
   closeSheet();
   Object.values(groupListeners).forEach(u=>u());
   groupListeners={};
-  S={tasks:[],groups:[],rocks:0,totalXP:0,xpToday:0,lastXPDate:'',
+  S={quests:[],groups:[],rocks:0,totalXP:0,xpToday:0,lastXPDate:'',
     ownedThemes:['white','cream','dark'],ownedIcons:['check'],equippedTheme:'white',equippedIcon:'check'};
   await signOut(auth);
 }
@@ -411,15 +411,15 @@ function friendlyAuthError(code){
 window.doSignIn=doSignIn; window.doSignUp=doSignUp; window.doSignOut=doSignOut;
 window.toggleAuthMode=function(){authIsSignUp=!authIsSignUp;authError='';render();};
 
-// ─── TASK LOGIC ───────────────────────────────────────────────────────────────
-function tasksForDate(dk){
-  return S.tasks.filter(t=>t.date===dk).sort((a,b)=>{
+// ─── QUEST LOGIC ───────────────────────────────────────────────────────────────
+function questsForDate(dk){
+  return S.quests.filter(t=>t.date===dk).sort((a,b)=>{
     if(a.isDone!==b.isDone) return a.isDone?1:-1;
     return (PRI[b.priority]?.rank||0)-(PRI[a.priority]?.rank||0);
   });
 }
-window.toggleTask=function(id){
-  const t=S.tasks.find(x=>x.id===id); if(!t) return;
+window.toggleQuest=function(id){
+  const t=S.quests.find(x=>x.id===id); if(!t) return;
   t.isDone=!t.isDone;
   if(t.isDone){
     const today=todayKey();
@@ -431,15 +431,15 @@ window.toggleTask=function(id){
       if(t.groupId) addGroupPoint(t.groupId);
     }
   }
-  fsUpdateTask(t); queueProfileSave(); render();
+  fsUpdateQuest(t); queueProfileSave(); render();
 };
-window.deleteTask=function(id){
-  S.tasks=S.tasks.filter(x=>x.id!==id);
-  fsDeleteTask(id); render();
+window.deleteQuest=function(id){
+  S.quests=S.quests.filter(x=>x.id!==id);
+  fsDeleteQuest(id); render();
 };
 function timeDate(dk,ts){const[h,m]=ts.split(':').map(Number);const d=parseDate(dk);d.setHours(h,m,0,0);return d;}
 
-// ─── ADD TASK ─────────────────────────────────────────────────────────────────
+// ─── ADD QUEST ─────────────────────────────────────────────────────────────────
 let draft={title:'',priority:'regular',category:'',groupId:'',hasTime:false,time:'09:00',notify:false};
 window.openAdd=function(){
   draft={title:'',priority:'regular',category:'',groupId:'',hasTime:false,time:'09:00',notify:false};
@@ -452,17 +452,17 @@ function refreshAddSheet(){document.getElementById('sheet-body').innerHTML=build
 window.confirmAdd=async function(){
   const title=(document.getElementById('di-t')?.value||draft.title).trim();
   if(!title) return;
-  const task={id:uid(),title,date:selectedDate,isDone:false,
+  const quest={id:uid(),title,date:selectedDate,isDone:false,
     priority:draft.priority,category:draft.category||null,
     groupId:draft.groupId||null,
     time:draft.hasTime?draft.time:null,
     notify:draft.hasTime&&draft.notify,
     rewardClaimed:false,xpClaimed:false};
-  S.tasks.push(task);
-  await fsAddTask(task);
-  if(task.notify&&task.time&&'Notification' in window&&Notification.permission==='granted'){
-    const delay=timeDate(task.date,task.time).getTime()-Date.now();
-    if(delay>0) setTimeout(()=>{if(S.tasks.find(t=>t.id===task.id&&!t.isDone)) new Notification('Task due',{body:task.title,icon:'icon-192.png'});},delay);
+  S.quests.push(quest);
+  await fsAddQuest(quest);
+  if(quest.notify&&quest.time&&'Notification' in window&&Notification.permission==='granted'){
+    const delay=timeDate(quest.date,quest.time).getTime()-Date.now();
+    if(delay>0) setTimeout(()=>{if(S.quests.find(t=>t.id===quest.id&&!t.isDone)) new Notification('Quest due',{body:quest.title,icon:'icon-192.png'});},delay);
   }
   closeSheet(); render();
 };
@@ -514,8 +514,8 @@ window.confirmJoin=async function(){
 window.openGroup=function(code){selGroupCode=code;profileView='groupDetail';render();};
 window.shareGroup=function(code){
   const g=S.groups.find(x=>x.code===code); if(!g) return;
-  const text=`Join my OtterList group "${g.name}" with code: ${code}`;
-  if(navigator.share) navigator.share({title:'OtterList Invite',text});
+  const text=`Join my OtterQuests group "${g.name}" with code: ${code}`;
+  if(navigator.share) navigator.share({title:'OtterQuests Invite',text});
   else { navigator.clipboard?.writeText(text).then(()=>alert('Invite copied!')).catch(()=>alert(text)); }
 };
 
@@ -553,15 +553,15 @@ function buildAuth(){
   const t=th();
   return `<div class="auth-wrap">
     <div class="auth-logo"><i class="ti ti-checklist"></i></div>
-    <div class="auth-app-name">OtterList</div>
-    <div class="auth-tagline">Your tasks. Your rocks. Your otters.</div>
+    <div class="auth-app-name">OtterQuests</div>
+    <div class="auth-tagline">Your quests. Your rocks. Your otters.</div>
     <div class="auth-card">
       <div class="auth-tabs">
         <button class="auth-tab ${!authIsSignUp?'active':''}" onclick="toggleAuthMode()">Sign In</button>
         <button class="auth-tab ${authIsSignUp?'active':''}" onclick="toggleAuthMode()">Sign Up</button>
       </div>
       <div id="auth-err" class="auth-error">${esc(authError)}</div>
-      ${authIsSignUp?`<div class="auth-field"><label class="auth-label">Your name</label><input id="a-name" type="text" placeholder="Otter McTaskface" autocomplete="name"></div>`:''}
+      ${authIsSignUp?`<div class="auth-field"><label class="auth-label">Your name</label><input id="a-name" type="text" placeholder="Otter McQuestface" autocomplete="name"></div>`:''}
       <div class="auth-field"><label class="auth-label">Email</label><input id="a-email" type="email" placeholder="you@example.com" autocomplete="email"></div>
       <div class="auth-field"><label class="auth-label">Password</label><input id="a-pw" type="password" placeholder="${authIsSignUp?'Min 6 characters':'Your password'}" autocomplete="${authIsSignUp?'new-password':'current-password'}"></div>
       <button id="auth-submit" class="btn btn-primary" style="margin-top:4px" onclick="${authIsSignUp?'doSignUp()':'doSignIn()'}">
@@ -574,9 +574,9 @@ function buildAuth(){
 
 // ─── LIST TAB ─────────────────────────────────────────────────────────────────
 function buildList(){
-  const t=th(), tasks=tasksForDate(selectedDate);
+  const t=th(), quests=questsForDate(selectedDate);
   const calNav=calMode==='day'?buildDayNav():calMode==='week'?buildWeekNav():buildMonthNav();
-  const taskRows=tasks.length?tasks.map(buildTaskRow).join(''):`<div class="empty-state"><i class="ti ti-checklist"></i>Nothing here — add a task!</div>`;
+  const questRows=quests.length?quests.map(buildQuestRow).join(''):`<div class="empty-state"><i class="ti ti-checklist"></i>Nothing here — add a quest!</div>`;
   return `<div class="nav-bar">
     <div style="width:60px"></div>
     <span class="nav-title">List</span>
@@ -585,8 +585,8 @@ function buildList(){
   <div class="seg">${['day','week','month'].map(m=>`<button class="seg-btn ${calMode===m?'active':''}" onclick="setCalMode('${m}')">${m[0].toUpperCase()+m.slice(1)}</button>`).join('')}</div>
   ${calNav}
   <hr style="border:none;border-top:0.5px solid var(--border)">
-  <button class="add-task-btn" onclick="openAdd()"><i class="ti ti-plus" style="font-size:16px"></i> Add Task</button>
-  <div style="padding:0 16px">${taskRows}</div>`;
+  <button class="add-quest-btn" onclick="openAdd()"><i class="ti ti-plus" style="font-size:16px"></i> Add Quest</button>
+  <div style="padding:0 16px">${questRows}</div>`;
 }
 function buildDayNav(){
   const t=th();
@@ -608,7 +608,7 @@ function buildWeekNav(){
     <button class="day-nav-btn" onclick="shiftWeek(1)"><i class="ti ti-chevron-right"></i></button>
   </div>
   <div class="week-strip">${days.map(dk=>{
-    const sel=dk===selectedDate,has=S.tasks.some(x=>x.date===dk),d=parseDate(dk);
+    const sel=dk===selectedDate,has=S.quests.some(x=>x.date===dk),d=parseDate(dk);
     return `<div class="week-cell" onclick="selDate('${dk}')">
       <span style="font-size:10px;color:${t.st}">${d.toLocaleDateString(undefined,{weekday:'narrow'})}</span>
       <span style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;background:${sel?t.ac:'transparent'};color:${sel?'#fff':t.tx};font-weight:${sel?600:400}">${d.getDate()}</span>
@@ -623,7 +623,7 @@ function buildMonthNav(){
   let cells=letters.map(l=>`<div style="text-align:center;font-size:10px;color:${t.st};padding-bottom:3px">${l}</div>`);
   for(let i=0;i<firstDay;i++) cells.push('<div></div>');
   for(let day=1;day<=dim;day++){
-    const dk=fmtDate(new Date(y,m,day)),sel=dk===selectedDate,has=S.tasks.some(x=>x.date===dk);
+    const dk=fmtDate(new Date(y,m,day)),sel=dk===selectedDate,has=S.quests.some(x=>x.date===dk);
     cells.push(`<div class="month-cell" onclick="selDate('${dk}')">
       <span style="width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;background:${sel?t.ac:'transparent'};color:${sel?'#fff':t.tx};font-weight:${sel?600:400}">${day}</span>
       <span style="width:4px;height:4px;border-radius:50%;background:${has?t.ac:'transparent'}"></span>
@@ -636,29 +636,29 @@ function buildMonthNav(){
   </div>
   <div class="month-grid">${cells.join('')}</div>`;
 }
-function buildTaskRow(tk){
+function buildQuestRow(tk){
   const t=th(),p=PRI[tk.priority]||PRI.regular,g=tk.groupId?S.groups.find(x=>x.code===tk.groupId||x.id===tk.groupId):null;
-  return `<div class="task-row" onclick="toggleTask('${tk.id}')">
-    <div class="task-bar" style="background:${p.color}"></div>
-    <i class="ti ${tk.isDone?ic():'ti-circle'} task-icon" style="color:${tk.isDone?t.ac:t.st}"></i>
+  return `<div class="quest-row" onclick="toggleQuest('${tk.id}')">
+    <div class="quest-bar" style="background:${p.color}"></div>
+    <i class="ti ${tk.isDone?ic():'ti-circle'} quest-icon" style="color:${tk.isDone?t.ac:t.st}"></i>
     <div style="flex:1;min-width:0;align-self:center">
-      <div class="task-title ${tk.isDone?'done':''}">${esc(tk.title)}</div>
-      <div class="task-meta">
+      <div class="quest-title ${tk.isDone?'done':''}">${esc(tk.title)}</div>
+      <div class="quest-meta">
         ${tk.time?`<span style="font-size:11px;color:${t.st};display:flex;align-items:center;gap:3px">${tk.notify?'<i class="ti ti-bell" style="font-size:10px"></i>':''} ${tk.time}</span>`:''}
         ${tk.category?`<span class="cat-pill">${esc(tk.category)}</span>`:''}
         ${g?`<span style="font-size:11px;color:${t.ac};display:flex;align-items:center;gap:3px"><i class="ti ti-users" style="font-size:10px"></i>${esc(g.name)}</span>`:''}
       </div>
     </div>
-    <button onclick="event.stopPropagation();deleteTask('${tk.id}')" style="background:none;border:none;color:${t.st};font-size:18px;padding:4px;align-self:center"><i class="ti ti-trash"></i></button>
+    <button onclick="event.stopPropagation();deleteQuest('${tk.id}')" style="background:none;border:none;color:${t.st};font-size:18px;padding:4px;align-self:center"><i class="ti ti-trash"></i></button>
   </div>`;
 }
 
-// ─── ADD TASK SHEET ───────────────────────────────────────────────────────────
+// ─── ADD QUEST SHEET ───────────────────────────────────────────────────────────
 function buildAddSheet(){
   const t=th();
   return `<div class="sheet-handle"></div>
-  <div class="sheet-title">New Task</div>
-  <div class="form-group"><label class="form-label">Task name</label>
+  <div class="sheet-title">New Quest</div>
+  <div class="form-group"><label class="form-label">Quest name</label>
     <input id="di-t" type="text" placeholder="What needs doing?" oninput="draft.title=this.value"></div>
   <div class="form-group"><label class="form-label">Priority</label>
   <div class="priority-row">${Object.entries(PRI).map(([k,v])=>`
@@ -682,7 +682,7 @@ function buildAddSheet(){
     <p style="font-size:11px;color:var(--st);margin-top:4px">Rocks only awarded if completed on time.</p>`:''}
   <div class="btn-row">
     <button class="btn btn-ghost btn-sm" onclick="closeSheet()">Cancel</button>
-    <button class="btn btn-primary btn-sm" onclick="confirmAdd()">Add Task</button>
+    <button class="btn btn-primary btn-sm" onclick="confirmAdd()">Add Quest</button>
   </div>`;
 }
 
@@ -739,7 +739,7 @@ function buildProfile(){
     <div style="font-size:11px;color:${t.st}">${S.xpToday}/10 XP earned today</div>
   </div>
   <div class="stats-row">
-    ${[['ti-circle-filled','#8B5E34',S.rocks,'Rocks'],['ti-star',t.ac,S.totalXP,'Total XP'],['ti-checklist',t.ac,S.tasks.filter(x=>x.isDone).length,'Done']].map(([ic,col,val,lbl])=>
+    ${[['ti-circle-filled','#8B5E34',S.rocks,'Rocks'],['ti-star',t.ac,S.totalXP,'Total XP'],['ti-checklist',t.ac,S.quests.filter(x=>x.isDone).length,'Done']].map(([ic,col,val,lbl])=>
       `<div class="stat-card"><i class="ti ${ic}" style="font-size:18px;color:${col}"></i>
         <div style="font-size:18px;font-weight:700;color:${t.tx};margin:4px 0 2px">${val}</div>
         <div style="font-size:11px;color:${t.st}">${lbl}</div></div>`).join('')}
@@ -757,7 +757,7 @@ function buildProfile(){
       </div>`).join('')}
     ${S.groups.length===0?`<div class="card" style="text-align:center;color:${t.st}">
       <i class="ti ti-users" style="font-size:28px;display:block;margin-bottom:8px"></i>
-      Create or join a group to share tasks and compete on a leaderboard.
+      Create or join a group to share quests and compete on a leaderboard.
     </div>`:''}
     <button onclick="openJoinGroup()" style="display:flex;align-items:center;gap:6px;background:none;border:none;color:${t.ac};font-size:13px;font-weight:500;margin-top:4px;padding:4px 0;cursor:pointer">
       <i class="ti ti-user-plus" style="font-size:16px"></i> Join a group with a code
