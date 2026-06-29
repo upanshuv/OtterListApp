@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="OtterQuests">
+<meta name="theme-color" content="#7C5CBF" id="themeColorMeta">
+<title>OtterQuests</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.x/tabler-icons.min.css">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+body{display:flex;flex-direction:column;background:#f0f0f0}
+#app{display:flex;flex-direction:column;height:100%;max-width:430px;margin:0 auto;background:var(--bg,#fff);position:relative;overflow:hidden;box-shadow:0 0 40px rgba(0,0,0,.12)}
+#screen{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
+#tabbar{display:flex;border-top:0.5px solid var(--border,rgba(0,0,0,.08));background:var(--sf,#F5F5F5);padding-bottom:max(env(safe-area-inset-bottom),8px);flex-shrink:0}
+.tab-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 0 4px;background:none;border:none;cursor:pointer;color:var(--st,#7A7A7E);font-size:10px;font-family:inherit}
+.tab-btn.active{color:var(--ac,#7C5CBF)}
+.tab-btn i{font-size:22px}
+input{background:var(--bg,#fff);border:0.5px solid var(--border,rgba(0,0,0,.1));border-radius:10px;padding:13px 14px;font-size:15px;color:var(--tx,#1C1C1E);width:100%;outline:none;font-family:inherit}
+input:focus{border-color:var(--ac,#7C5CBF);box-shadow:0 0 0 3px rgba(124,92,191,.12)}
+select{background:var(--bg,#fff);border:0.5px solid var(--border,rgba(0,0,0,.1));border-radius:10px;padding:13px 14px;font-size:15px;color:var(--tx,#1C1C1E);width:100%;outline:none;font-family:inherit;-webkit-appearance:none}
+button{cursor:pointer;font-family:inherit}
+.btn{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:14px;border-radius:12px;border:none;font-size:16px;font-weight:600;cursor:pointer;transition:opacity .15s}
+.btn:active{opacity:.75}
+.btn-primary{background:var(--ac,#7C5CBF);color:#fff}
+.btn-primary:disabled{opacity:.4}
+.btn-ghost{background:rgba(0,0,0,.06);color:var(--tx,#1C1C1E)}
+.btn-danger{background:#D64545;color:#fff}
+.btn-sm{padding:10px 14px;font-size:14px;border-radius:10px}
+/* ── AUTH SCREEN ── */
+.auth-wrap{min-height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px 24px max(env(safe-area-inset-bottom),24px);background:var(--bg,#fff)}
+.auth-logo{width:72px;height:72px;border-radius:20px;background:var(--ac,#7C5CBF);display:flex;align-items:center;justify-content:center;margin-bottom:14px}
+.auth-logo i{font-size:36px;color:#fff}
+.auth-app-name{font-size:26px;font-weight:700;color:var(--tx,#1C1C1E);margin-bottom:4px}
+.auth-tagline{font-size:14px;color:var(--st,#7A7A7E);margin-bottom:28px}
+.auth-card{width:100%;background:var(--sf,#F5F5F5);border-radius:18px;padding:20px;margin-bottom:16px}
+.auth-tabs{display:flex;background:rgba(0,0,0,.06);border-radius:10px;padding:3px;margin-bottom:20px}
+.auth-tab{flex:1;padding:8px;border:none;border-radius:8px;font-size:15px;font-weight:500;cursor:pointer;color:var(--st,#7A7A7E);background:transparent;transition:all .15s}
+.auth-tab.active{background:#fff;color:var(--ac,#7C5CBF);box-shadow:0 1px 4px rgba(0,0,0,.1)}
+.auth-field{margin-bottom:12px}
+.auth-label{font-size:12px;color:var(--st,#7A7A7E);margin-bottom:5px;display:block;font-weight:500}
+.auth-error{background:#FFF0F0;border:0.5px solid #FFCCCC;border-radius:10px;padding:10px 12px;font-size:13px;color:#D64545;margin-bottom:12px;display:none}
+.auth-footer{font-size:12px;color:var(--st,#7A7A7E);text-align:center;line-height:1.6}
+/* ── SPINNER ── */
+.spinner-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:12px;color:var(--st,#7A7A7E)}
+.spinner{width:32px;height:32px;border:3px solid rgba(124,92,191,.2);border-top-color:#7C5CBF;border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+/* ── MAIN APP ── */
+.nav-bar{display:flex;align-items:center;justify-content:space-between;padding:16px 16px 8px;padding-top:max(16px,env(safe-area-inset-top));flex-shrink:0}
+.nav-title{font-size:17px;font-weight:600;color:var(--tx,#1C1C1E)}
+.badge{display:flex;align-items:center;gap:4px;font-size:13px;font-weight:600;color:#8B5E34}
+.seg{display:flex;background:rgba(0,0,0,.05);border-radius:8px;padding:2px;margin:0 16px 10px}
+.seg-btn{flex:1;padding:6px 0;border:none;border-radius:6px;font-size:13px;cursor:pointer;background:transparent;color:var(--tx,#1C1C1E);font-weight:400}
+.seg-btn.active{background:var(--sf,#F5F5F5);font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.overlay{position:absolute;inset:0;background:rgba(0,0,0,.45);z-index:50;display:flex;align-items:flex-end}
+.sheet{background:var(--sf,#F5F5F5);border-radius:20px 20px 0 0;padding:16px;width:100%;max-height:90vh;overflow-y:auto;padding-bottom:max(env(safe-area-inset-bottom),24px)}
+.sheet-handle{width:36px;height:4px;border-radius:2px;background:rgba(0,0,0,.15);margin:0 auto 14px}
+.sheet-title{font-size:17px;font-weight:600;color:var(--tx,#1C1C1E);text-align:center;margin-bottom:16px}
+.form-group{margin-bottom:12px}
+.form-label{font-size:12px;color:var(--st,#7A7A7E);margin-bottom:5px;display:block;font-weight:500}
+.btn-row{display:flex;gap:10px;margin-top:16px}
+.btn-row .btn{flex:1}
+.priority-row{display:flex;gap:8px}
+.pri-btn{flex:1;padding:8px 4px;border-radius:8px;border:0.5px solid var(--border,rgba(0,0,0,.1));background:transparent;font-size:10px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--tx,#1C1C1E)}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;cursor:pointer;border-top:0.5px solid var(--border,rgba(0,0,0,.07))}
+.toggle-row span{font-size:14px;color:var(--tx,#1C1C1E)}
+.tog{width:44px;height:26px;border-radius:13px;background:rgba(0,0,0,.1);position:relative;transition:background .2s;flex-shrink:0}
+.tog.on{background:var(--ac,#7C5CBF)}
+.tog-thumb{position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.tog.on .tog-thumb{left:21px}
+.quest-row{display:flex;align-items:stretch;gap:10px;padding:11px 0;border-bottom:0.5px solid var(--border,rgba(0,0,0,.07));cursor:pointer;user-select:none}
+.quest-bar{width:4px;border-radius:2px;flex-shrink:0}
+.quest-icon{font-size:20px;align-self:center;flex-shrink:0}
+.quest-title{font-size:15px;color:var(--tx,#1C1C1E);line-height:1.3}
+.quest-title.done{text-decoration:line-through;color:var(--st,#7A7A7E)}
+.quest-meta{display:flex;align-items:center;gap:6px;margin-top:3px;flex-wrap:wrap}
+.cat-pill{font-size:10px;font-weight:500;background:rgba(0,0,0,.06);color:var(--st,#7A7A7E);padding:2px 7px;border-radius:20px}
+.day-nav{display:flex;align-items:center;justify-content:space-between;padding:0 16px 8px}
+.day-nav-btn{background:none;border:none;color:var(--tx,#1C1C1E);font-size:22px;padding:4px 8px;cursor:pointer}
+.week-strip{display:flex;padding:0 12px 8px}
+.week-cell{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer}
+.month-grid{display:grid;grid-template-columns:repeat(7,1fr);padding:0 12px}
+.add-quest-btn{display:flex;align-items:center;justify-content:center;gap:6px;margin:10px 16px;padding:10px;border-radius:10px;background:rgba(0,0,0,.05);border:none;color:var(--ac,#7C5CBF);font-size:14px;font-weight:500;cursor:pointer;width:calc(100% - 32px)}
+.empty-state{text-align:center;padding:48px 32px;color:var(--st,#7A7A7E)}
+.empty-state i{font-size:40px;margin-bottom:10px;display:block}
+.shop-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 16px 16px}
+.shop-card{background:var(--sf,#F5F5F5);border-radius:12px;border:0.5px solid var(--border,rgba(0,0,0,.08));padding:14px;display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;text-align:center}
+.shop-card.equipped{border:2px solid var(--ac,#7C5CBF)}
+.swatch{width:30px;height:30px;border-radius:50%;border:0.5px solid rgba(0,0,0,.1)}
+.card{background:var(--sf,#F5F5F5);border-radius:14px;padding:14px;margin-bottom:10px}
+.level-card{background:var(--sf,#F5F5F5);border-radius:16px;padding:16px;margin:0 16px 12px}
+.xp-bar-track{height:6px;background:rgba(0,0,0,.08);border-radius:3px;overflow:hidden;margin:10px 0 6px}
+.xp-bar-fill{height:100%;border-radius:3px;background:var(--ac,#7C5CBF);transition:width .4s}
+.stats-row{display:flex;gap:10px;padding:0 16px;margin-bottom:12px}
+.stat-card{flex:1;background:var(--sf,#F5F5F5);border-radius:14px;padding:12px;text-align:center}
+.group-row{background:var(--sf,#F5F5F5);border-radius:14px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;cursor:pointer}
+.user-row{display:flex;align-items:center;gap:10px;background:var(--sf,#F5F5F5);border-radius:14px;padding:12px 14px;margin:0 16px 12px}
+.avatar{width:38px;height:38px;border-radius:50%;background:var(--ac,#7C5CBF);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#fff;flex-shrink:0}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="screen"><div class="spinner-wrap"><div class="spinner"></div><span>Loading OtterQuests…</span></div></div>
+  <div id="tabbar" style="display:none">
+    <button class="tab-btn active" id="tb-list" onclick="switchTab('list')"><i class="ti ti-checklist"></i>List</button>
+    <button class="tab-btn" id="tb-shop" onclick="switchTab('shop')"><i class="ti ti-shopping-cart"></i>Shop</button>
+    <button class="tab-btn" id="tb-profile" onclick="switchTab('profile')"><i class="ti ti-user-circle"></i>Profile</button>
+  </div>
+  <div id="ov" style="display:none;position:absolute;inset:0;background:rgba(0,0,0,.45);z-index:50;align-items:flex-end">
+    <div style="position:absolute;inset:0" onclick="closeSheet()"></div>
+    <div id="sheet-body" class="sheet"></div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp }                                   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, createUserWithEmailAndPassword,
+         signInWithEmailAndPassword, signOut,
+         onAuthStateChanged, updateProfile }               from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getFirestore, doc, setDoc, getDoc, updateDoc,
+         collection, getDocs, deleteDoc,
+         onSnapshot, serverTimestamp }                     from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+// ─────────────────────────────────────────────
+// FIREBASE CONFIG  ← replace ALL values below
+// Get these from Firebase console → Project Settings → Your Apps → Web
+// ─────────────────────────────────────────────
+const firebaseConfig = {
+  apiKey: "AIzaSyB-6fhgsx-mcxnjkaN-qE89wijdm0QFzgs",
+  authDomain: "otterquests-99628.firebaseapp.com",
+  projectId: "otterquests-99628",
+  storageBucket: "otterquests-99628.firebasestorage.app",
+  messagingSenderId: "990031384788",
+  appId: "1:990031384788:web:1209f326544c69ac776b41",
+};
+
+const fireApp = initializeApp(firebaseConfig);
+const auth    = getAuth(fireApp);
+const db      = getFirestore(fireApp);
+
+// ─── DATA CONSTANTS ───────────────────────────────────────────────────────────
+const THEMES=[
+  {id:'white',name:'Classic White',cost:0,sw:'#FFFFFF',bg:'#FFFFFF',sf:'#F5F5F5',tx:'#1C1C1E',st:'#7A7A7E',ac:'#7C5CBF'},
+  {id:'cream',name:'Cream',cost:0,sw:'#F2E4C8',bg:'#FBF6EC',sf:'#FFFFFF',tx:'#2C2A22',st:'#8A8470',ac:'#B98D55'},
+  {id:'dark',name:'Midnight Dive',cost:0,sw:'#1C1C1E',bg:'#1C1C1E',sf:'#2C2C2E',tx:'#F2F2F2',st:'#9A9A9E',ac:'#5DCAA5'},
+  {id:'kelp',name:'Kelp Green',cost:15,sw:'#C7E3B8',bg:'#EAF3E4',sf:'#FFFFFF',tx:'#20331F',st:'#5C7A5A',ac:'#7C5CBF'},
+  {id:'sunset',name:'Sunset Otter',cost:25,sw:'#F6C49B',bg:'#FCEEE3',sf:'#FFFFFF',tx:'#5A2F12',st:'#A07347',ac:'#E0793C'},
+  {id:'tidepool',name:'Tide Pool',cost:25,sw:'#D8C9F0',bg:'#F1ECFA',sf:'#FFFFFF',tx:'#342457',st:'#8576A8',ac:'#7C5CBF'},
+  {id:'ocean',name:'Ocean Depths',cost:35,sw:'#0F2A2E',bg:'#0F2A2E',sf:'#1B3B40',tx:'#EAF6F4',st:'#8FB9B6',ac:'#2EC4B6'},
+  {id:'blush',name:'Blush Shell',cost:20,sw:'#F3C3D2',bg:'#FBE9EE',sf:'#FFFFFF',tx:'#5A2438',st:'#A8748C',ac:'#D96B8B'},
+  {id:'lavender',name:'Lavender Mist',cost:20,sw:'#DAD3F5',bg:'#F0EEFA',sf:'#FFFFFF',tx:'#362F57',st:'#8A82AC',ac:'#8B7FD1'},
+  {id:'moss',name:'Autumn Moss',cost:30,sw:'#D9CBA0',bg:'#EFE8D8',sf:'#FFFFFF',tx:'#3A3220',st:'#8A7D5C',ac:'#8A7B4E'},
+  {id:'coral',name:'Coral Reef',cost:40,sw:'#FFC3B8',bg:'#FFF0EC',sf:'#FFFFFF',tx:'#5C2A20',st:'#B07A6C',ac:'#FF6F61'},
+];
+const ICONS=[
+  {id:'check',name:'Classic Check',cost:0,ic:'ti-circle-check'},
+  {id:'paw',name:'Otter Paw',cost:20,ic:'ti-paw'},
+  {id:'star',name:'Gold Star',cost:20,ic:'ti-star'},
+  {id:'leaf',name:'Kelp Leaf',cost:20,ic:'ti-leaf'},
+  {id:'flame',name:'Flame Streak',cost:30,ic:'ti-flame'},
+  {id:'heart',name:'Heart',cost:25,ic:'ti-heart'},
+  {id:'trophy',name:'Trophy',cost:35,ic:'ti-trophy'},
+  {id:'diamond',name:'Diamond',cost:30,ic:'ti-diamond'},
+  {id:'gift',name:'Gift',cost:25,ic:'ti-gift'},
+  {id:'moon',name:'Night Owl',cost:30,ic:'ti-moon-stars'},
+  {id:'bolt',name:'Lightning',cost:25,ic:'ti-bolt'},
+];
+const PRI={
+  regular:      {label:'Regular',      color:'#8E8E93',rank:0},
+  important:    {label:'Important',    color:'#E0793C',rank:1},
+  veryImportant:{label:'Very Imp.',    color:'#D64545',rank:2},
+};
+const CATS=['Personal','Work','Home','Errands','Health','Other'];
+
+// ─── APP STATE ────────────────────────────────────────────────────────────────
+let currentUser   = null;
+let authMode      = 'loading';   // loading | auth | app
+let authIsSignUp  = false;
+let authError     = '';
+let authLoading   = false;
+
+let tab           = 'list';
+let calMode       = 'day';
+let selectedDate  = todayKey();
+let profileView   = 'main';     // main | groupDetail
+let selGroupCode  = null;
+let shopCat       = 'theme';
+let groupListeners= {};         // code -> unsubscribe fn
+
+let S = {
+  quests:[], groups:[], rocks:0, totalXP:0, xpToday:0, lastXPDate:'',
+  ownedThemes:['white','cream','dark'], ownedIcons:['check'],
+  equippedTheme:'white', equippedIcon:'check',
+};
+
+// ─── DATE HELPERS ─────────────────────────────────────────────────────────────
+function todayKey(){const d=new Date();return d.getFullYear()+'-'+p2(d.getMonth()+1)+'-'+p2(d.getDate());}
+function p2(n){return String(n).padStart(2,'0');}
+function fmtDate(d){return d.getFullYear()+'-'+p2(d.getMonth()+1)+'-'+p2(d.getDate());}
+function parseDate(k){const[y,m,d]=k.split('-').map(Number);return new Date(y,m-1,d);}
+function addDays(k,n){const d=parseDate(k);d.setDate(d.getDate()+n);return fmtDate(d);}
+function isToday(k){return k===todayKey();}
+function fmtDisplay(k){return parseDate(k).toLocaleDateString(undefined,{weekday:'long',month:'short',day:'numeric'});}
+function monthName(k){return parseDate(k).toLocaleDateString(undefined,{month:'long',year:'numeric'});}
+function weekStart(k){const d=parseDate(k);d.setDate(d.getDate()-d.getDay());return fmtDate(d);}
+function uid(){return Math.random().toString(36).slice(2)+Date.now().toString(36);}
+
+// ─── THEME ────────────────────────────────────────────────────────────────────
+function th(){return THEMES.find(t=>t.id===S.equippedTheme)||THEMES[0];}
+function ic(){return(ICONS.find(i=>i.id===S.equippedIcon)||ICONS[0]).ic;}
+function applyTheme(){
+  const t=th(),r=document.documentElement.style;
+  r.setProperty('--bg',t.bg); r.setProperty('--sf',t.sf);
+  r.setProperty('--tx',t.tx); r.setProperty('--st',t.st);
+  r.setProperty('--ac',t.ac);
+  r.setProperty('--border',t.bg==='#1C1C1E'||t.bg==='#0F2A2E'?'rgba(255,255,255,.12)':'rgba(0,0,0,.08)');
+  document.getElementById('themeColorMeta').content=t.ac;
+  document.getElementById('app').style.background=t.bg;
+  const tb=document.getElementById('tabbar');
+  if(tb){tb.style.background=t.sf;tb.style.borderTopColor=t.bg==='#1C1C1E'||t.bg==='#0F2A2E'?'rgba(255,255,255,.12)':'rgba(0,0,0,.08)';}
+}
+
+// ─── FIRESTORE: SAVE PROFILE ─────────────────────────────────────────────────
+let profileTimer=null;
+function queueProfileSave(){
+  clearTimeout(profileTimer);
+  profileTimer=setTimeout(()=>saveProfile(),800);
+}
+async function saveProfile(){
+  if(!currentUser) return;
+  try {
+    await setDoc(doc(db,'users',currentUser.uid),{
+      rocks:S.rocks, totalXP:S.totalXP, xpToday:S.xpToday,
+      lastXPDate:S.lastXPDate, ownedThemes:S.ownedThemes,
+      ownedIcons:S.ownedIcons, equippedTheme:S.equippedTheme,
+      equippedIcon:S.equippedIcon,
+    },{merge:true});
+  } catch(e){console.warn('profile save failed',e);}
+}
+
+// ─── FIRESTORE: QUESTS ─────────────────────────────────────────────────────────
+async function fsAddQuest(quest){
+  if(!currentUser) return;
+  await setDoc(doc(db,'users',currentUser.uid,'quests',quest.id),quest);
+}
+async function fsUpdateQuest(quest){
+  if(!currentUser) return;
+  await setDoc(doc(db,'users',currentUser.uid,'quests',quest.id),quest);
+}
+async function fsDeleteQuest(questId){
+  if(!currentUser) return;
+  await deleteDoc(doc(db,'users',currentUser.uid,'quests',questId));
+}
+
+// ─── FIRESTORE: GROUPS ───────────────────────────────────────────────────────
+async function fsCreateGroup(name){
+  const code=Array.from({length:6},()=>'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[Math.floor(Math.random()*33)]).join('');
+  const id=uid();
+  const displayName=currentUser.displayName||currentUser.email.split('@')[0];
+  const groupData={id,name,code,createdBy:currentUser.uid,
+    members:{[currentUser.uid]:{displayName,points:0}}};
+  await setDoc(doc(db,'groups',code),groupData);
+  const localGroup={id,name,code,points:0};
+  S.groups.push(localGroup);
+  await setDoc(doc(db,'users',currentUser.uid),{groupCodes:[...S.groups.map(g=>g.code)]},{merge:true});
+  listenToGroup(code);
+  return localGroup;
+}
+async function fsJoinGroup(code){
+  const snap=await getDoc(doc(db,'groups',code));
+  if(!snap.exists()) return null;
+  const data=snap.data();
+  const displayName=currentUser.displayName||currentUser.email.split('@')[0];
+  await updateDoc(doc(db,'groups',code),{[`members.${currentUser.uid}`]:{displayName,points:0}});
+  const localGroup={id:data.id,name:data.name,code,points:0};
+  if(!S.groups.find(g=>g.code===code)){
+    S.groups.push(localGroup);
+    await setDoc(doc(db,'users',currentUser.uid),{groupCodes:[...S.groups.map(g=>g.code)]},{merge:true});
+  }
+  listenToGroup(code);
+  return localGroup;
+}
+function listenToGroup(code){
+  if(groupListeners[code]) return;
+  const unsub=onSnapshot(doc(db,'groups',code),snap=>{
+    if(!snap.exists()) return;
+    const data=snap.data();
+    const local=S.groups.find(g=>g.code===code);
+    if(local){
+      local.name=data.name;
+      local.members=data.members;
+      local.points=data.members[currentUser?.uid]?.points||0;
+    }
+    render();
+  });
+  groupListeners[code]=unsub;
+}
+async function addGroupPoint(code){
+  if(!currentUser||!code) return;
+  try {
+    const snap=await getDoc(doc(db,'groups',code));
+    if(!snap.exists()) return;
+    const data=snap.data();
+    const cur=(data.members[currentUser.uid]?.points||0)+1;
+    await updateDoc(doc(db,'groups',code),{[`members.${currentUser.uid}.points`]:cur});
+  } catch(e){console.warn('group point failed',e);}
+}
+
+// ─── FIRESTORE: LOAD USER DATA ────────────────────────────────────────────────
+async function loadUserData(uid){
+  const profileSnap=await getDoc(doc(db,'users',uid));
+  if(profileSnap.exists()){
+    const d=profileSnap.data();
+    S.rocks=d.rocks||0; S.totalXP=d.totalXP||0;
+    S.xpToday=d.xpToday||0; S.lastXPDate=d.lastXPDate||'';
+    S.ownedThemes=d.ownedThemes||['white','cream','dark'];
+    S.ownedIcons=d.ownedIcons||['check'];
+    S.equippedTheme=d.equippedTheme||'white';
+    S.equippedIcon=d.equippedIcon||'check';
+    // Load groups the user is in
+    const codes=d.groupCodes||[];
+    S.groups=[];
+    for(const code of codes){
+      const gSnap=await getDoc(doc(db,'groups',code));
+      if(gSnap.exists()){
+        const gd=gSnap.data();
+        S.groups.push({id:gd.id,name:gd.name,code,points:gd.members[uid]?.points||0,members:gd.members});
+        listenToGroup(code);
+      }
+    }
+  }
+  // Load quests
+  const questsSnap=await getDocs(collection(db,'users',uid,'quests'));
+  S.quests=questsSnap.docs.map(d=>({...d.data(),id:d.id}));
+}
+
+// ─── AUTH ─────────────────────────────────────────────────────────────────────
+onAuthStateChanged(auth, async user=>{
+  if(user){
+    currentUser=user;
+    await loadUserData(user.uid);
+    authMode='app';
+    applyTheme();
+    document.getElementById('tabbar').style.display='flex';
+  } else {
+    currentUser=null;
+    authMode='auth';
+    document.getElementById('tabbar').style.display='none';
+    // clean up group listeners
+    Object.values(groupListeners).forEach(u=>u());
+    groupListeners={};
+  }
+  render();
+});
+
+async function doSignUp(){
+  const name=document.getElementById('a-name')?.value?.trim();
+  const email=document.getElementById('a-email')?.value?.trim();
+  const pw=document.getElementById('a-pw')?.value;
+  if(!name||!email||!pw){ authError='Please fill in all fields.'; render(); return; }
+  if(pw.length<6){ authError='Password must be at least 6 characters.'; render(); return; }
+  authLoading=true; authError=''; render();
+  const timer=setTimeout(()=>{ authLoading=false; authError='Request timed out. Make sure Email/Password is enabled in Firebase console → Authentication → Sign-in method, and that your internet connection is working.'; render(); },12000);
+  try {
+    const cred=await createUserWithEmailAndPassword(auth,email,pw);
+    clearTimeout(timer);
+    await updateProfile(cred.user,{displayName:name});
+  } catch(e){
+    clearTimeout(timer);
+    console.error('Sign up error:', e.code, e.message);
+    authLoading=false; authError=friendlyAuthError(e.code); render();
+  }
+}
+async function doSignIn(){
+  const email=document.getElementById('a-email')?.value?.trim();
+  const pw=document.getElementById('a-pw')?.value;
+  if(!email||!pw){ authError='Please enter your email and password.'; render(); return; }
+  authLoading=true; authError=''; render();
+  const timer=setTimeout(()=>{ authLoading=false; authError='Request timed out. Check your internet connection and Firebase configuration.'; render(); },12000);
+  try {
+    await signInWithEmailAndPassword(auth,email,pw);
+    clearTimeout(timer);
+  } catch(e){
+    clearTimeout(timer);
+    console.error('Sign in error:', e.code, e.message);
+    authLoading=false; authError=friendlyAuthError(e.code); render();
+  }
+}
+async function doSignOut(){
+  closeSheet();
+  Object.values(groupListeners).forEach(u=>u());
+  groupListeners={};
+  S={quests:[],groups:[],rocks:0,totalXP:0,xpToday:0,lastXPDate:'',
+    ownedThemes:['white','cream','dark'],ownedIcons:['check'],equippedTheme:'white',equippedIcon:'check'};
+  await signOut(auth);
+}
+function showAuthError(msg){ authError=msg; render(); }
+function setAuthLoading(val){ authLoading=val; render(); }
+function friendlyAuthError(code){
+  const map={
+    'auth/email-already-in-use':'That email is already registered. Try signing in instead.',
+    'auth/wrong-password':'Incorrect password. Please try again.',
+    'auth/user-not-found':'No account found with that email.',
+    'auth/invalid-email':'Please enter a valid email address.',
+    'auth/too-many-requests':'Too many attempts. Please wait a moment and try again.',
+    'auth/weak-password':'Password must be at least 6 characters.',
+    'auth/invalid-credential':'Incorrect email or password.',
+    'auth/operation-not-allowed':'Email sign-in is not enabled. Go to Firebase console → Authentication → Sign-in method → enable Email/Password.',
+    'auth/network-request-failed':'Network error. Check your internet connection and try again.',
+    'auth/internal-error':'Firebase internal error. Double-check your config keys in index.html.',
+    'auth/configuration-not-found':'Firebase is not configured correctly. Double-check your config keys in index.html.',
+    'auth/unauthorized-domain':'This domain is not authorized in Firebase. Go to Firebase console → Authentication → Settings → Authorized domains and add your site URL.',
+  };
+  return map[code]||`Something went wrong (${code||'unknown error'}). Check the browser console (F12) for details.`;
+}
+window.doSignIn=doSignIn; window.doSignUp=doSignUp; window.doSignOut=doSignOut;
+window.toggleAuthMode=function(){authIsSignUp=!authIsSignUp;authError='';render();};
+
+// ─── QUEST LOGIC ───────────────────────────────────────────────────────────────
+function questsForDate(dk){
+  return S.quests.filter(t=>t.date===dk).sort((a,b)=>{
+    if(a.isDone!==b.isDone) return a.isDone?1:-1;
+    return (PRI[b.priority]?.rank||0)-(PRI[a.priority]?.rank||0);
+  });
+}
+window.toggleQuest=function(id){
+  const t=S.quests.find(x=>x.id===id); if(!t) return;
+  t.isDone=!t.isDone;
+  if(t.isDone){
+    const today=todayKey();
+    if(S.lastXPDate!==today){S.xpToday=0;S.lastXPDate=today;}
+    if(!t.xpClaimed&&S.xpToday<10){t.xpClaimed=true;S.xpToday++;S.totalXP++;}
+    const onTime=!t.time||(new Date()<=timeDate(t.date,t.time));
+    if(!t.rewardClaimed&&onTime){
+      t.rewardClaimed=true; S.rocks++;
+      if(t.groupId) addGroupPoint(t.groupId);
+    }
+  }
+  fsUpdateQuest(t); queueProfileSave(); render();
+};
+window.deleteQuest=function(id){
+  S.quests=S.quests.filter(x=>x.id!==id);
+  fsDeleteQuest(id); render();
+};
+function timeDate(dk,ts){const[h,m]=ts.split(':').map(Number);const d=parseDate(dk);d.setHours(h,m,0,0);return d;}
+
+// ─── ADD QUEST ─────────────────────────────────────────────────────────────────
+let draft={title:'',priority:'regular',category:'',groupId:'',hasTime:false,time:'09:00',notify:false};
+window.openAdd=function(){
+  draft={title:'',priority:'regular',category:'',groupId:'',hasTime:false,time:'09:00',notify:false};
+  showSheet(buildAddSheet());
+};
+window.setPri=function(k){draft.priority=k;refreshAddSheet();};
+window.toggleDraftTime=function(){draft.hasTime=!draft.hasTime;refreshAddSheet();};
+window.toggleDraftNotify=function(){draft.notify=!draft.notify;refreshAddSheet();};
+function refreshAddSheet(){document.getElementById('sheet-body').innerHTML=buildAddSheet();}
+window.confirmAdd=async function(){
+  const title=(document.getElementById('di-t')?.value||draft.title).trim();
+  if(!title) return;
+  const quest={id:uid(),title,date:selectedDate,isDone:false,
+    priority:draft.priority,category:draft.category||null,
+    groupId:draft.groupId||null,
+    time:draft.hasTime?draft.time:null,
+    notify:draft.hasTime&&draft.notify,
+    rewardClaimed:false,xpClaimed:false};
+  S.quests.push(quest);
+  await fsAddQuest(quest);
+  if(quest.notify&&quest.time&&'Notification' in window&&Notification.permission==='granted'){
+    const delay=timeDate(quest.date,quest.time).getTime()-Date.now();
+    if(delay>0) setTimeout(()=>{if(S.quests.find(t=>t.id===quest.id&&!t.isDone)) new Notification('Quest due',{body:quest.title,icon:'icon-192.png'});},delay);
+  }
+  closeSheet(); render();
+};
+
+// ─── SHOP ─────────────────────────────────────────────────────────────────────
+window.setShopCat=function(c){shopCat=c;render();};
+window.shopAction=function(id){
+  const isTheme=shopCat==='theme';
+  const item=(isTheme?THEMES:ICONS).find(x=>x.id===id); if(!item) return;
+  const owned=isTheme?S.ownedThemes:S.ownedIcons;
+  if(owned.includes(id)){
+    if(isTheme){S.equippedTheme=id;applyTheme();}else S.equippedIcon=id;
+    queueProfileSave(); render();
+  } else if(S.rocks>=item.cost){
+    S.rocks-=item.cost; owned.push(id);
+    if(isTheme){S.equippedTheme=id;applyTheme();}else S.equippedIcon=id;
+    queueProfileSave(); render();
+  } else {
+    showSheet(`<div class="sheet-handle"></div><div style="text-align:center;padding:8px 0 16px">
+      <i class="ti ti-mood-sad" style="font-size:36px;color:var(--st);display:block;margin-bottom:8px"></i>
+      <div style="font-size:16px;font-weight:600;color:var(--tx);margin-bottom:8px">Not enough rocks</div>
+      <div style="font-size:14px;color:var(--st);margin-bottom:16px">You need ${item.cost} rocks for ${esc(item.name)}.</div>
+      <button class="btn btn-primary btn-sm" onclick="closeSheet()">Got it</button></div>`);
+  }
+};
+
+// ─── GROUPS ───────────────────────────────────────────────────────────────────
+window.openCreateGroup=function(){showSheet(buildCreateGroupSheet());};
+window.confirmCreateGroup=async function(){
+  const name=document.getElementById('gn')?.value?.trim();
+  if(!name) return;
+  const btn=document.getElementById('gcreate-btn');
+  if(btn){btn.disabled=true;btn.textContent='Creating…';}
+  const g=await fsCreateGroup(name);
+  closeSheet(); render();
+};
+window.openJoinGroup=function(){showSheet(buildJoinSheet());};
+window.confirmJoin=async function(){
+  const code=(document.getElementById('jc')?.value||'').trim().toUpperCase();
+  if(!code) return;
+  const btn=document.getElementById('gjoin-btn');
+  if(btn){btn.disabled=true;btn.textContent='Joining…';}
+  const g=await fsJoinGroup(code);
+  if(g){closeSheet();render();}
+  else{if(btn){btn.disabled=false;btn.textContent='Join';}
+    const err=document.getElementById('join-err');
+    if(err){err.style.display='block';err.textContent='No group found with that code. Check it and try again.';}}
+};
+window.openGroup=function(code){selGroupCode=code;profileView='groupDetail';render();};
+window.shareGroup=function(code){
+  const g=S.groups.find(x=>x.code===code); if(!g) return;
+  const text=`Join my OtterQuests group "${g.name}" with code: ${code}`;
+  if(navigator.share) navigator.share({title:'OtterQuests Invite',text});
+  else { navigator.clipboard?.writeText(text).then(()=>alert('Invite copied!')).catch(()=>alert(text)); }
+};
+
+// ─── CALENDAR NAV ─────────────────────────────────────────────────────────────
+window.setCalMode=function(m){calMode=m;render();};
+window.selDate=function(dk){selectedDate=dk;render();};
+window.shiftDay=function(n){selectedDate=addDays(selectedDate,n);render();};
+window.shiftWeek=function(n){selectedDate=addDays(selectedDate,n*7);render();};
+window.shiftMonth=function(n){const d=parseDate(selectedDate);d.setMonth(d.getMonth()+n);selectedDate=fmtDate(d);render();};
+
+// ─── SHEET UTIL ───────────────────────────────────────────────────────────────
+function showSheet(html){
+  const ov=document.getElementById('ov');
+  document.getElementById('sheet-body').innerHTML=html;
+  ov.style.display='flex';
+}
+window.closeSheet=function(){document.getElementById('ov').style.display='none';};
+
+// ─── RENDER ───────────────────────────────────────────────────────────────────
+function render(){
+  const scr=document.getElementById('screen');
+  if(authMode==='loading'){scr.innerHTML='<div class="spinner-wrap"><div class="spinner"></div><span>Loading…</span></div>';return;}
+  if(authMode==='auth'){scr.innerHTML=buildAuth();return;}
+  scr.innerHTML=tab==='list'?buildList():tab==='shop'?buildShop():buildProfile();
+}
+window.switchTab=function(t){
+  tab=t;profileView='main';
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tb-'+t).classList.add('active');
+  render();
+};
+
+// ─── AUTH SCREEN ──────────────────────────────────────────────────────────────
+function buildAuth(){
+  const t=th();
+  return `<div class="auth-wrap">
+    <div class="auth-logo"><i class="ti ti-checklist"></i></div>
+    <div class="auth-app-name">OtterQuests</div>
+    <div class="auth-tagline">Your quests. Your rocks. Your otters.</div>
+    <div class="auth-card">
+      <div class="auth-tabs">
+        <button class="auth-tab ${!authIsSignUp?'active':''}" onclick="toggleAuthMode()">Sign In</button>
+        <button class="auth-tab ${authIsSignUp?'active':''}" onclick="toggleAuthMode()">Sign Up</button>
+      </div>
+      <div id="auth-err" class="auth-error">${esc(authError)}</div>
+      ${authIsSignUp?`<div class="auth-field"><label class="auth-label">Your name</label><input id="a-name" type="text" placeholder="Otter McQuestface" autocomplete="name"></div>`:''}
+      <div class="auth-field"><label class="auth-label">Email</label><input id="a-email" type="email" placeholder="you@example.com" autocomplete="email"></div>
+      <div class="auth-field"><label class="auth-label">Password</label><input id="a-pw" type="password" placeholder="${authIsSignUp?'Min 6 characters':'Your password'}" autocomplete="${authIsSignUp?'new-password':'current-password'}"></div>
+      <button id="auth-submit" class="btn btn-primary" style="margin-top:4px" onclick="${authIsSignUp?'doSignUp()':'doSignIn()'}">
+        ${authLoading?(authIsSignUp?'Creating account…':'Signing in…'):(authIsSignUp?'Create Account':'Sign In')}
+      </button>
+    </div>
+    <div class="auth-footer">Your data is saved securely in the cloud.<br>It stays safe across devices and app restarts.</div>
+  </div>`;
+}
+
+// ─── LIST TAB ─────────────────────────────────────────────────────────────────
+function buildList(){
+  const t=th(), quests=questsForDate(selectedDate);
+  const calNav=calMode==='day'?buildDayNav():calMode==='week'?buildWeekNav():buildMonthNav();
+  const questRows=quests.length?quests.map(buildQuestRow).join(''):`<div class="empty-state"><i class="ti ti-checklist"></i>Nothing here — add a quest!</div>`;
+  return `<div class="nav-bar">
+    <div style="width:60px"></div>
+    <span class="nav-title">List</span>
+    <div class="badge"><i class="ti ti-circle-filled" style="font-size:12px;color:#8B5E34"></i>${S.rocks}</div>
+  </div>
+  <div class="seg">${['day','week','month'].map(m=>`<button class="seg-btn ${calMode===m?'active':''}" onclick="setCalMode('${m}')">${m[0].toUpperCase()+m.slice(1)}</button>`).join('')}</div>
+  ${calNav}
+  <hr style="border:none;border-top:0.5px solid var(--border)">
+  <button class="add-quest-btn" onclick="openAdd()"><i class="ti ti-plus" style="font-size:16px"></i> Add Quest</button>
+  <div style="padding:0 16px">${questRows}</div>`;
+}
+function buildDayNav(){
+  const t=th();
+  return `<div class="day-nav">
+    <button class="day-nav-btn" onclick="shiftDay(-1)"><i class="ti ti-chevron-left"></i></button>
+    <div style="text-align:center">
+      <div style="font-size:15px;font-weight:600;color:${t.tx}">${fmtDisplay(selectedDate)}</div>
+      ${isToday(selectedDate)?`<div style="font-size:11px;color:${t.st}">Today</div>`:''}
+    </div>
+    <button class="day-nav-btn" onclick="shiftDay(1)"><i class="ti ti-chevron-right"></i></button>
+  </div>`;
+}
+function buildWeekNav(){
+  const t=th(),ws=weekStart(selectedDate);
+  const days=Array.from({length:7},(_,i)=>addDays(ws,i));
+  return `<div class="day-nav" style="padding-bottom:4px">
+    <button class="day-nav-btn" onclick="shiftWeek(-1)"><i class="ti ti-chevron-left"></i></button>
+    <span style="font-size:14px;font-weight:600;color:${t.tx}">${monthName(selectedDate)}</span>
+    <button class="day-nav-btn" onclick="shiftWeek(1)"><i class="ti ti-chevron-right"></i></button>
+  </div>
+  <div class="week-strip">${days.map(dk=>{
+    const sel=dk===selectedDate,has=S.quests.some(x=>x.date===dk),d=parseDate(dk);
+    return `<div class="week-cell" onclick="selDate('${dk}')">
+      <span style="font-size:10px;color:${t.st}">${d.toLocaleDateString(undefined,{weekday:'narrow'})}</span>
+      <span style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;background:${sel?t.ac:'transparent'};color:${sel?'#fff':t.tx};font-weight:${sel?600:400}">${d.getDate()}</span>
+      <span style="width:5px;height:5px;border-radius:50%;background:${has?t.ac:'transparent'}"></span>
+    </div>`;
+  }).join('')}</div>`;
+}
+function buildMonthNav(){
+  const t=th(),d=parseDate(selectedDate),y=d.getFullYear(),m=d.getMonth();
+  const firstDay=new Date(y,m,1).getDay(),dim=new Date(y,m+1,0).getDate();
+  const letters=['S','M','T','W','T','F','S'];
+  let cells=letters.map(l=>`<div style="text-align:center;font-size:10px;color:${t.st};padding-bottom:3px">${l}</div>`);
+  for(let i=0;i<firstDay;i++) cells.push('<div></div>');
+  for(let day=1;day<=dim;day++){
+    const dk=fmtDate(new Date(y,m,day)),sel=dk===selectedDate,has=S.quests.some(x=>x.date===dk);
+    cells.push(`<div class="month-cell" onclick="selDate('${dk}')">
+      <span style="width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;background:${sel?t.ac:'transparent'};color:${sel?'#fff':t.tx};font-weight:${sel?600:400}">${day}</span>
+      <span style="width:4px;height:4px;border-radius:50%;background:${has?t.ac:'transparent'}"></span>
+    </div>`);
+  }
+  return `<div class="day-nav" style="padding-bottom:4px">
+    <button class="day-nav-btn" onclick="shiftMonth(-1)"><i class="ti ti-chevron-left"></i></button>
+    <span style="font-size:14px;font-weight:600;color:${t.tx}">${monthName(selectedDate)}</span>
+    <button class="day-nav-btn" onclick="shiftMonth(1)"><i class="ti ti-chevron-right"></i></button>
+  </div>
+  <div class="month-grid">${cells.join('')}</div>`;
+}
+function buildQuestRow(tk){
+  const t=th(),p=PRI[tk.priority]||PRI.regular,g=tk.groupId?S.groups.find(x=>x.code===tk.groupId||x.id===tk.groupId):null;
+  return `<div class="quest-row" onclick="toggleQuest('${tk.id}')">
+    <div class="quest-bar" style="background:${p.color}"></div>
+    <i class="ti ${tk.isDone?ic():'ti-circle'} quest-icon" style="color:${tk.isDone?t.ac:t.st}"></i>
+    <div style="flex:1;min-width:0;align-self:center">
+      <div class="quest-title ${tk.isDone?'done':''}">${esc(tk.title)}</div>
+      <div class="quest-meta">
+        ${tk.time?`<span style="font-size:11px;color:${t.st};display:flex;align-items:center;gap:3px">${tk.notify?'<i class="ti ti-bell" style="font-size:10px"></i>':''} ${tk.time}</span>`:''}
+        ${tk.category?`<span class="cat-pill">${esc(tk.category)}</span>`:''}
+        ${g?`<span style="font-size:11px;color:${t.ac};display:flex;align-items:center;gap:3px"><i class="ti ti-users" style="font-size:10px"></i>${esc(g.name)}</span>`:''}
+      </div>
+    </div>
+    <button onclick="event.stopPropagation();deleteQuest('${tk.id}')" style="background:none;border:none;color:${t.st};font-size:18px;padding:4px;align-self:center"><i class="ti ti-trash"></i></button>
+  </div>`;
+}
+
+// ─── ADD QUEST SHEET ───────────────────────────────────────────────────────────
+function buildAddSheet(){
+  const t=th();
+  return `<div class="sheet-handle"></div>
+  <div class="sheet-title">New Quest</div>
+  <div class="form-group"><label class="form-label">Quest name</label>
+    <input id="di-t" type="text" placeholder="What needs doing?" oninput="draft.title=this.value"></div>
+  <div class="form-group"><label class="form-label">Priority</label>
+  <div class="priority-row">${Object.entries(PRI).map(([k,v])=>`
+    <button class="pri-btn" id="pri-${k}" onclick="setPri('${k}')" style="${draft.priority===k?`border-color:${v.color};background:${v.color}22`:''}" >
+      <span style="width:9px;height:9px;border-radius:50%;background:${v.color};display:block"></span><span>${v.label}</span>
+    </button>`).join('')}</div></div>
+  <div class="form-group"><label class="form-label">Category</label>
+    <select id="di-c" onchange="draft.category=this.value">
+      <option value="">None</option>${CATS.map(c=>`<option value="${c}">${c}</option>`).join('')}
+    </select></div>
+  ${S.groups.length?`<div class="form-group"><label class="form-label">Group (optional)</label>
+    <select id="di-g" onchange="draft.groupId=this.value">
+      <option value="">None</option>${S.groups.map(g=>`<option value="${g.code}">${esc(g.name)}</option>`).join('')}
+    </select></div>`:''}
+  <div class="toggle-row" onclick="toggleDraftTime()"><span>Set a time</span>
+    <div class="tog ${draft.hasTime?'on':''}"><div class="tog-thumb"></div></div></div>
+  ${draft.hasTime?`<div class="form-group" style="margin-top:10px">
+    <input id="di-tm" type="time" value="${draft.time}" onchange="draft.time=this.value"></div>
+    <div class="toggle-row" onclick="toggleDraftNotify()"><span>Notify me when it's time</span>
+      <div class="tog ${draft.notify?'on':''}"><div class="tog-thumb"></div></div></div>
+    <p style="font-size:11px;color:var(--st);margin-top:4px">Rocks only awarded if completed on time.</p>`:''}
+  <div class="btn-row">
+    <button class="btn btn-ghost btn-sm" onclick="closeSheet()">Cancel</button>
+    <button class="btn btn-primary btn-sm" onclick="confirmAdd()">Add Quest</button>
+  </div>`;
+}
+
+// ─── SHOP TAB ─────────────────────────────────────────────────────────────────
+function buildShop(){
+  const t=th(),catalog=shopCat==='theme'?THEMES:ICONS;
+  const owned=shopCat==='theme'?S.ownedThemes:S.ownedIcons;
+  const equipped=shopCat==='theme'?S.equippedTheme:S.equippedIcon;
+  return `<div class="nav-bar">
+    <div style="width:60px"></div><span class="nav-title">Shop</span>
+    <div class="badge"><i class="ti ti-circle-filled" style="font-size:12px;color:#8B5E34"></i>${S.rocks}</div>
+  </div>
+  <div class="seg">
+    <button class="seg-btn ${shopCat==='theme'?'active':''}" onclick="setShopCat('theme')">Themes</button>
+    <button class="seg-btn ${shopCat==='icon'?'active':''}" onclick="setShopCat('icon')">Icons</button>
+  </div>
+  <div class="shop-grid">${catalog.map(item=>{
+    const isOwned=owned.includes(item.id),isEq=equipped===item.id;
+    return `<div class="shop-card ${isEq?'equipped':''}" onclick="shopAction('${item.id}')">
+      ${shopCat==='theme'?`<div class="swatch" style="background:${item.sw}"></div>`:`<i class="ti ${item.ic}" style="font-size:28px;color:${t.tx}"></i>`}
+      <div style="font-size:13px;font-weight:500;color:${t.tx}">${item.name}</div>
+      ${isEq?`<div style="font-size:11px;color:${t.ac};display:flex;align-items:center;gap:3px"><i class="ti ti-check" style="font-size:11px"></i>Equipped</div>`
+        :isOwned?`<div style="font-size:11px;color:${t.st}">Tap to equip</div>`
+        :`<div style="font-size:12px;font-weight:600;color:#8B5E34;display:flex;align-items:center;gap:3px"><i class="ti ti-circle-filled" style="font-size:10px;color:#8B5E34"></i>${item.cost}</div>`}
+    </div>`;
+  }).join('')}</div>`;
+}
+
+// ─── PROFILE TAB ──────────────────────────────────────────────────────────────
+function buildProfile(){
+  if(profileView==='groupDetail') return buildGroupDetail();
+  const t=th(),lvl=Math.floor(S.totalXP/50)+1,xpIn=S.totalXP%50,pct=Math.round(xpIn/50*100);
+  const displayName=currentUser?.displayName||currentUser?.email?.split('@')[0]||'Otter';
+  const initials=displayName.slice(0,2).toUpperCase();
+  return `<div class="nav-bar">
+    <div style="width:60px"></div><span class="nav-title">Profile</span>
+    <button onclick="openCreateGroup()" style="background:none;border:none;color:${t.ac};font-size:22px;cursor:pointer"><i class="ti ti-plus"></i></button>
+  </div>
+  <div class="user-row">
+    <div class="avatar" style="background:${t.ac}">${initials}</div>
+    <div style="flex:1;min-width:0">
+      <div style="font-size:15px;font-weight:600;color:${t.tx};overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(displayName)}</div>
+      <div style="font-size:12px;color:${t.st};overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(currentUser?.email||'')}</div>
+    </div>
+    <button onclick="confirmSignOut()" style="background:none;border:none;color:${t.st};font-size:20px;cursor:pointer" title="Sign out"><i class="ti ti-logout"></i></button>
+  </div>
+  <div class="level-card">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start">
+      <div><div style="font-size:22px;font-weight:700;color:${t.tx}">Level ${lvl}</div>
+        <div style="font-size:12px;color:${t.st};margin-top:2px">${xpIn}/50 XP to next level</div></div>
+      <i class="ti ti-medal" style="font-size:30px;color:${t.ac}"></i>
+    </div>
+    <div class="xp-bar-track"><div class="xp-bar-fill" style="width:${pct}%"></div></div>
+    <div style="font-size:11px;color:${t.st}">${S.xpToday}/10 XP earned today</div>
+  </div>
+  <div class="stats-row">
+    ${[['ti-circle-filled','#8B5E34',S.rocks,'Rocks'],['ti-star',t.ac,S.totalXP,'Total XP'],['ti-checklist',t.ac,S.quests.filter(x=>x.isDone).length,'Done']].map(([ic,col,val,lbl])=>
+      `<div class="stat-card"><i class="ti ${ic}" style="font-size:18px;color:${col}"></i>
+        <div style="font-size:18px;font-weight:700;color:${t.tx};margin:4px 0 2px">${val}</div>
+        <div style="font-size:11px;color:${t.st}">${lbl}</div></div>`).join('')}
+  </div>
+  <div style="padding:0 16px">
+    <div style="font-size:15px;font-weight:600;color:${t.tx};margin-bottom:10px">Your Groups</div>
+    ${S.groups.map(g=>`
+      <div class="group-row" onclick="openGroup('${g.code}')">
+        <div><div style="font-size:14px;font-weight:600;color:${t.tx}">${esc(g.name)}</div>
+          <div style="font-size:11px;color:${t.st}">Code: ${g.code}</div></div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="display:flex;align-items:center;gap:4px;font-size:13px;font-weight:600;color:${t.ac}"><i class="ti ti-trophy" style="font-size:14px"></i>${g.points||0}</span>
+          <i class="ti ti-chevron-right" style="font-size:16px;color:${t.st}"></i>
+        </div>
+      </div>`).join('')}
+    ${S.groups.length===0?`<div class="card" style="text-align:center;color:${t.st}">
+      <i class="ti ti-users" style="font-size:28px;display:block;margin-bottom:8px"></i>
+      Create or join a group to share quests and compete on a leaderboard.
+    </div>`:''}
+    <button onclick="openJoinGroup()" style="display:flex;align-items:center;gap:6px;background:none;border:none;color:${t.ac};font-size:13px;font-weight:500;margin-top:4px;padding:4px 0;cursor:pointer">
+      <i class="ti ti-user-plus" style="font-size:16px"></i> Join a group with a code
+    </button>
+  </div>`;
+}
+window.confirmSignOut=function(){
+  showSheet(`<div class="sheet-handle"></div><div class="sheet-title">Sign out?</div>
+    <p style="text-align:center;color:var(--st);font-size:14px;margin-bottom:20px">Your data is saved to the cloud and will be here when you sign back in.</p>
+    <div class="btn-row">
+      <button class="btn btn-ghost btn-sm" onclick="closeSheet()">Cancel</button>
+      <button class="btn btn-danger btn-sm" onclick="doSignOut()">Sign Out</button>
+    </div>`);
+};
+
+function buildGroupDetail(){
+  const t=th(),g=S.groups.find(x=>x.code===selGroupCode);
+  if(!g){profileView='main';return buildProfile();}
+  const members=Object.entries(g.members||{}).sort((a,b)=>b[1].points-a[1].points);
+  return `<div class="nav-bar">
+    <button onclick="profileView='main';render()" style="background:none;border:none;color:${t.ac};font-size:15px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:2px">
+      <i class="ti ti-chevron-left" style="font-size:18px"></i>Back</button>
+    <span class="nav-title">${esc(g.name)}</span><div style="width:60px"></div>
+  </div>
+  <div style="background:${t.sf};border-radius:16px;padding:16px;margin:0 16px 14px;text-align:center">
+    <div style="font-size:13px;color:${t.st}">Join code — share this with your group</div>
+    <div style="font-size:24px;font-weight:700;letter-spacing:4px;color:${t.tx};margin:8px 0 14px">${g.code}</div>
+    <button class="btn btn-primary btn-sm" style="width:auto;padding:10px 24px" onclick="shareGroup('${g.code}')">
+      <i class="ti ti-share" style="font-size:15px"></i> Share Invite
+    </button>
+  </div>
+  <div style="padding:0 16px;margin-bottom:8px"><div style="font-size:15px;font-weight:600;color:${t.tx}">Leaderboard</div></div>
+  ${members.map(([uid,m],i)=>`
+    <div style="background:${t.sf};border-radius:14px;padding:12px 14px;margin:0 16px 8px;display:flex;align-items:center;justify-content:space-between">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="width:26px;height:26px;border-radius:50%;background:${i===0?'#F5A623':i===1?'#B0B0B0':i===2?'#CD7F32':t.sf};display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:${i<3?'#fff':t.tx}">${i+1}</span>
+        <span style="font-size:14px;font-weight:${uid===currentUser?.uid?'700':'400'};color:${t.tx}">${esc(m.displayName||'Member')}${uid===currentUser?.uid?' (you)':''}</span>
+      </div>
+      <span style="font-size:14px;font-weight:700;color:${t.ac}">${m.points||0} pts</span>
+    </div>`).join('')}`;
+}
+function buildCreateGroupSheet(){
+  return `<div class="sheet-handle"></div><div class="sheet-title">Create Group</div>
+    <div class="form-group"><label class="form-label">Group name</label>
+      <input id="gn" type="text" placeholder="e.g. Smith Family, Work Team"></div>
+    <p style="font-size:12px;color:var(--st);margin-bottom:16px;line-height:1.5">A unique join code is generated automatically. Anyone with the code can join and share in the group leaderboard in real time.</p>
+    <div class="btn-row">
+      <button class="btn btn-ghost btn-sm" onclick="closeSheet()">Cancel</button>
+      <button id="gcreate-btn" class="btn btn-primary btn-sm" onclick="confirmCreateGroup()">Create</button>
+    </div>`;
+}
+function buildJoinSheet(){
+  return `<div class="sheet-handle"></div><div class="sheet-title">Join Group</div>
+    <div class="form-group"><label class="form-label">Enter join code</label>
+      <input id="jc" type="text" placeholder="e.g. AB12CD" style="text-transform:uppercase;letter-spacing:2px" autocapitalize="characters"></div>
+    <div id="join-err" style="font-size:12px;color:#D64545;display:none;margin-bottom:8px"></div>
+    <div class="btn-row">
+      <button class="btn btn-ghost btn-sm" onclick="closeSheet()">Cancel</button>
+      <button id="gjoin-btn" class="btn btn-primary btn-sm" onclick="confirmJoin()">Join</button>
+    </div>`;
+}
+
+function esc(s){const d=document.createElement('div');d.textContent=s||'';return d.innerHTML;}
+
+// ─── SERVICE WORKER ──────────────────────────────────────────────────────────
+if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
+</body>
+</html>
