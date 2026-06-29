@@ -117,6 +117,22 @@ button{cursor:pointer;font-family:inherit}
   </div>
 </div>
 
+<!-- Fires immediately — if the app module hasn't rendered within 12s, show an error -->
+<script>
+window._appReady = false;
+setTimeout(function() {
+  if (!window._appReady) {
+    document.getElementById('screen').innerHTML =
+      '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;padding:32px;text-align:center;gap:14px;font-family:system-ui">' +
+      '<div style="font-size:36px">⚠️</div>' +
+      '<div style="font-size:17px;font-weight:600;color:#1C1C1E">Failed to load</div>' +
+      '<div style="font-size:14px;color:#7A7A7E;line-height:1.6">Could not connect to Firebase.<br>Check that your internet connection is working and that the config keys in index.html are correct.</div>' +
+      '<button onclick="location.reload()" style="padding:12px 24px;background:#7C5CBF;color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;margin-top:8px">Try Again</button>' +
+      '</div>';
+  }
+}, 12000);
+</script>
+
 <script type="module">
 import { initializeApp }                                   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getAuth, createUserWithEmailAndPassword,
@@ -556,6 +572,7 @@ window.closeSheet=function(){document.getElementById('ov').style.display='none';
 
 // ─── RENDER ───────────────────────────────────────────────────────────────────
 function render(){
+  window._appReady = true;
   const scr=document.getElementById('screen');
   if(authMode==='loading'){scr.innerHTML='<div class="spinner-wrap"><div class="spinner"></div><span>Loading…</span></div>';return;}
   if(authMode==='auth'){scr.innerHTML=buildAuth();return;}

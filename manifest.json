@@ -2,7 +2,7 @@
   "name": "OtterQuests",
   "short_name": "OtterQuests",
   "description": "Your otter-themed quest list with rocks, groups, and leaderboards",
-  "start_url": "/",
+  "start_url": "/OtterQuests/",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#FFFFFF",
