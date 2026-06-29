@@ -340,7 +340,18 @@ async function loadUserData(uid){
 }
 
 // ─── AUTH ─────────────────────────────────────────────────────────────────────
+// If Firebase never responds within 10s, show an error instead of loading forever
+const loadTimeout = setTimeout(() => {
+  if (authMode === 'loading') {
+    authMode = 'auth';
+    authError = 'Could not connect to Firebase. Check your internet connection and that your config keys in index.html are correct.';
+    document.getElementById('tabbar').style.display = 'none';
+    render();
+  }
+}, 10000);
+
 onAuthStateChanged(auth, async user=>{
+  clearTimeout(loadTimeout);
   if(user){
     currentUser=user;
     await loadUserData(user.uid);
@@ -351,7 +362,6 @@ onAuthStateChanged(auth, async user=>{
     currentUser=null;
     authMode='auth';
     document.getElementById('tabbar').style.display='none';
-    // clean up group listeners
     Object.values(groupListeners).forEach(u=>u());
     groupListeners={};
   }
