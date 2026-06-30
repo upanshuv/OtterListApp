@@ -101,9 +101,62 @@ button{cursor:pointer;font-family:inherit}
 .group-row{background:var(--sf,#F5F5F5);border-radius:14px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;cursor:pointer}
 .user-row{display:flex;align-items:center;gap:10px;background:var(--sf,#F5F5F5);border-radius:14px;padding:12px 14px;margin:0 16px 12px}
 .avatar{width:38px;height:38px;border-radius:50%;background:var(--ac,#7C5CBF);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#fff;flex-shrink:0}
+
+/* ── RESPONSIVE LAYOUT ─────────────────────────── */
+/* Phone (default): full screen, bottom nav */
+html,body{height:100%;overflow:hidden}
+/* Tablet ≥640px: centered card */
+@media(min-width:640px){
+  body{align-items:center;justify-content:center;background:#e8e8e8}
+  #app{max-width:480px;border-radius:28px;height:calc(100vh - 48px);max-height:900px;box-shadow:0 8px 40px rgba(0,0,0,.18)}
+}
+/* Desktop ≥1080px: sidebar + content */
+@media(min-width:1080px){
+  body{flex-direction:row;align-items:stretch;justify-content:center;gap:0}
+  #sidebar{display:flex!important;flex-direction:column;width:230px;background:var(--sf,#F5F5F5);border-right:0.5px solid var(--border,rgba(0,0,0,.08));padding:28px 16px 24px;flex-shrink:0;gap:4px}
+  #app{width:480px;max-width:480px;border-radius:0;height:100vh;max-height:100vh;box-shadow:none}
+  #tabbar{display:none!important}
+  .sidebar-logo{display:flex;align-items:center;gap:10px;padding:0 8px 24px;border-bottom:0.5px solid var(--border,rgba(0,0,0,.08));margin-bottom:8px}
+  .sidebar-logo-icon{width:40px;height:40px;border-radius:12px;background:var(--ac,#7C5CBF);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .sidebar-logo-icon i{font-size:20px;color:#fff}
+  .sidebar-logo-name{font-size:16px;font-weight:700;color:var(--tx,#1C1C1E)}
+  .sidebar-btn{display:flex;align-items:center;gap:10px;padding:11px 12px;border:none;border-radius:10px;background:transparent;color:var(--st,#7A7A7E);font-size:14px;font-weight:500;cursor:pointer;width:100%;text-align:left;transition:all .15s}
+  .sidebar-btn:hover{background:rgba(0,0,0,.05)}
+  .sidebar-btn.active{background:rgba(124,92,191,.1);color:var(--ac,#7C5CBF)}
+  .sidebar-btn i{font-size:20px;width:24px}
+  .sidebar-spacer{flex:1}
+  .sidebar-user{display:flex;align-items:center;gap:8px;padding:12px;background:var(--bg,#fff);border-radius:12px;margin-top:8px;cursor:pointer}
+  .sidebar-user-info{flex:1;min-width:0}
+  .sidebar-user-name{font-size:13px;font-weight:600;color:var(--tx,#1C1C1E);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .sidebar-user-email{font-size:11px;color:var(--st,#7A7A7E);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+}
+/* Large monitor ≥1400px: wider content */
+@media(min-width:1400px){
+  #sidebar{width:260px}
+  #app{width:540px;max-width:540px}
+}
 </style>
 </head>
 <body>
+<!-- Desktop sidebar (hidden on mobile via CSS) -->
+<div id="sidebar" style="display:none">
+  <div class="sidebar-logo">
+    <div class="sidebar-logo-icon"><i class="ti ti-checklist"></i></div>
+    <span class="sidebar-logo-name">OtterQuests</span>
+  </div>
+  <button class="sidebar-btn active" id="sb-list" onclick="switchTab('list')"><i class="ti ti-checklist"></i>List</button>
+  <button class="sidebar-btn" id="sb-shop" onclick="switchTab('shop')"><i class="ti ti-shopping-cart"></i>Shop</button>
+  <button class="sidebar-btn" id="sb-profile" onclick="switchTab('profile')"><i class="ti ti-user-circle"></i>Profile</button>
+  <div class="sidebar-spacer"></div>
+  <div class="sidebar-user" onclick="switchTab('profile')">
+    <div class="avatar" id="sb-avatar" style="width:32px;height:32px;font-size:13px">?</div>
+    <div class="sidebar-user-info">
+      <div class="sidebar-user-name" id="sb-name">Account</div>
+      <div class="sidebar-user-email" id="sb-email"></div>
+    </div>
+    <button onclick="event.stopPropagation();confirmSignOut()" style="background:none;border:none;color:var(--st);font-size:18px;cursor:pointer;padding:4px" title="Sign out"><i class="ti ti-logout"></i></button>
+  </div>
+</div>
 <div id="app">
   <div id="screen"><div class="spinner-wrap"><div class="spinner"></div><span>Loading OtterQuests…</span></div></div>
   <div id="tabbar" style="display:none">
@@ -113,7 +166,7 @@ button{cursor:pointer;font-family:inherit}
   </div>
   <div id="ov" style="display:none;position:absolute;inset:0;background:rgba(0,0,0,.45);z-index:50;align-items:flex-end">
     <div style="position:absolute;inset:0" onclick="closeSheet()"></div>
-    <div id="sheet-body" class="sheet"></div>
+    <div id="sheet-body" class="sheet" onclick="event.stopPropagation()"></div>
   </div>
 </div>
 
@@ -148,12 +201,11 @@ import { getFirestore, doc, setDoc, getDoc, updateDoc,
 // ─────────────────────────────────────────────
 const firebaseConfig = {
   apiKey: "AIzaSyB-6fhgsx-mcxnjkaN-qE89wijdm0QFzgs",
-  authDomain: "otterlist-99628.firebaseapp.com",
-  projectId: "otterlist-99628",
-  storageBucket: "otterlist-99628.firebasestorage.app",
+  authDomain: "otterquests-99628.firebaseapp.com",
+  projectId: "otterquests-99628",
+  storageBucket: "otterquests-99628.firebasestorage.app",
   messagingSenderId: "990031384788",
   appId: "1:990031384788:web:1209f326544c69ac776b41",
-  measurementId: "G-MVPYHD6XM7"
 };
 
 const fireApp = initializeApp(firebaseConfig);
@@ -175,17 +227,17 @@ const THEMES=[
   {id:'coral',name:'Coral Reef',cost:40,sw:'#FFC3B8',bg:'#FFF0EC',sf:'#FFFFFF',tx:'#5C2A20',st:'#B07A6C',ac:'#FF6F61'},
 ];
 const ICONS=[
-  {id:'check',name:'Classic Check',cost:0,ic:'ti-circle-check'},
-  {id:'paw',name:'Otter Paw',cost:20,ic:'ti-paw'},
-  {id:'star',name:'Gold Star',cost:20,ic:'ti-star'},
-  {id:'leaf',name:'Kelp Leaf',cost:20,ic:'ti-leaf'},
-  {id:'flame',name:'Flame Streak',cost:30,ic:'ti-flame'},
-  {id:'heart',name:'Heart',cost:25,ic:'ti-heart'},
-  {id:'trophy',name:'Trophy',cost:35,ic:'ti-trophy'},
-  {id:'diamond',name:'Diamond',cost:30,ic:'ti-diamond'},
-  {id:'gift',name:'Gift',cost:25,ic:'ti-gift'},
-  {id:'moon',name:'Night Owl',cost:30,ic:'ti-moon-stars'},
-  {id:'bolt',name:'Lightning',cost:25,ic:'ti-bolt'},
+  {id:'check', name:'Classic Check', cost:0,  ic:'ti-circle-check', em:'✅'},
+  {id:'paw',   name:'Otter Paw',     cost:20, ic:'ti-paw',          em:'🐾'},
+  {id:'star',  name:'Gold Star',     cost:20, ic:'ti-star',         em:'⭐'},
+  {id:'leaf',  name:'Kelp Leaf',     cost:20, ic:'ti-leaf',         em:'🍃'},
+  {id:'flame', name:'Flame Streak',  cost:30, ic:'ti-flame',        em:'🔥'},
+  {id:'heart', name:'Heart',         cost:25, ic:'ti-heart',        em:'❤️'},
+  {id:'trophy',name:'Trophy',        cost:35, ic:'ti-trophy',       em:'🏆'},
+  {id:'diamond',name:'Diamond',      cost:30, ic:'ti-diamond',      em:'💎'},
+  {id:'gift',  name:'Gift',          cost:25, ic:'ti-gift',         em:'🎁'},
+  {id:'moon',  name:'Night Owl',     cost:30, ic:'ti-moon-stars',   em:'🌙'},
+  {id:'bolt',  name:'Lightning',     cost:25, ic:'ti-bolt',         em:'⚡'},
 ];
 const PRI={
   regular:      {label:'Regular',      color:'#8E8E93',rank:0},
@@ -230,16 +282,30 @@ function uid(){return Math.random().toString(36).slice(2)+Date.now().toString(36
 // ─── THEME ────────────────────────────────────────────────────────────────────
 function th(){return THEMES.find(t=>t.id===S.equippedTheme)||THEMES[0];}
 function ic(){return(ICONS.find(i=>i.id===S.equippedIcon)||ICONS[0]).ic;}
+function icEm(){return(ICONS.find(i=>i.id===S.equippedIcon)||ICONS[0]).em;}
 function applyTheme(){
   const t=th(),r=document.documentElement.style;
   r.setProperty('--bg',t.bg); r.setProperty('--sf',t.sf);
   r.setProperty('--tx',t.tx); r.setProperty('--st',t.st);
   r.setProperty('--ac',t.ac);
-  r.setProperty('--border',t.bg==='#1C1C1E'||t.bg==='#0F2A2E'?'rgba(255,255,255,.12)':'rgba(0,0,0,.08)');
+  const isDark=t.bg==='#1C1C1E'||t.bg==='#0F2A2E';
+  r.setProperty('--border',isDark?'rgba(255,255,255,.12)':'rgba(0,0,0,.08)');
   document.getElementById('themeColorMeta').content=t.ac;
   document.getElementById('app').style.background=t.bg;
   const tb=document.getElementById('tabbar');
-  if(tb){tb.style.background=t.sf;tb.style.borderTopColor=t.bg==='#1C1C1E'||t.bg==='#0F2A2E'?'rgba(255,255,255,.12)':'rgba(0,0,0,.08)';}
+  if(tb){tb.style.background=t.sf;tb.style.borderTopColor=isDark?'rgba(255,255,255,.12)':'rgba(0,0,0,.08)';}
+  const sb=document.getElementById('sidebar');
+  if(sb){sb.style.background=t.sf;sb.style.borderRightColor=isDark?'rgba(255,255,255,.12)':'rgba(0,0,0,.08)';}
+  // Update sidebar user info
+  if(currentUser){
+    const dn=currentUser.displayName||currentUser.email?.split('@')[0]||'?';
+    const av=document.getElementById('sb-avatar');
+    const nm=document.getElementById('sb-name');
+    const em=document.getElementById('sb-email');
+    if(av){av.textContent=dn.slice(0,2).toUpperCase();av.style.background=t.ac;}
+    if(nm) nm.textContent=dn;
+    if(em) em.textContent=currentUser.email||'';
+  }
 }
 
 // ─── FIRESTORE: SAVE PROFILE ─────────────────────────────────────────────────
@@ -375,10 +441,12 @@ onAuthStateChanged(auth, async user=>{
     authMode='app';
     applyTheme();
     document.getElementById('tabbar').style.display='flex';
+    document.getElementById('sidebar').style.display='flex';
   } else {
     currentUser=null;
     authMode='auth';
     document.getElementById('tabbar').style.display='none';
+    document.getElementById('sidebar').style.display='none';
     Object.values(groupListeners).forEach(u=>u());
     groupListeners={};
   }
@@ -582,7 +650,9 @@ function render(){
 window.switchTab=function(t){
   tab=t;profileView='main';
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
-  document.getElementById('tb-'+t).classList.add('active');
+  const tb=document.getElementById('tb-'+t); if(tb) tb.classList.add('active');
+  document.querySelectorAll('.sidebar-btn').forEach(b=>b.classList.remove('active'));
+  const sb=document.getElementById('sb-'+t); if(sb) sb.classList.add('active');
   render();
 };
 
@@ -740,7 +810,7 @@ function buildShop(){
   <div class="shop-grid">${catalog.map(item=>{
     const isOwned=owned.includes(item.id),isEq=equipped===item.id;
     return `<div class="shop-card ${isEq?'equipped':''}" onclick="shopAction('${item.id}')">
-      ${shopCat==='theme'?`<div class="swatch" style="background:${item.sw}"></div>`:`<i class="ti ${item.ic}" style="font-size:28px;color:${t.tx}"></i>`}
+      ${shopCat==='theme'?`<div class="swatch" style="background:${item.sw}"></div>`:`<span style="font-size:30px;line-height:1">${item.em}</span>`}
       <div style="font-size:13px;font-weight:500;color:${t.tx}">${item.name}</div>
       ${isEq?`<div style="font-size:11px;color:${t.ac};display:flex;align-items:center;gap:3px"><i class="ti ti-check" style="font-size:11px"></i>Equipped</div>`
         :isOwned?`<div style="font-size:11px;color:${t.st}">Tap to equip</div>`
@@ -757,7 +827,7 @@ function buildProfile(){
   const initials=displayName.slice(0,2).toUpperCase();
   return `<div class="nav-bar">
     <div style="width:60px"></div><span class="nav-title">Profile</span>
-    <button onclick="openCreateGroup()" style="background:none;border:none;color:${t.ac};font-size:22px;cursor:pointer"><i class="ti ti-plus"></i></button>
+    <button onclick="openCreateGroup()" style="background:${t.ac};color:#fff;border:none;border-radius:8px;padding:6px 12px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:4px"><i class="ti ti-plus" style="font-size:14px"></i>Group</button>
   </div>
   <div class="user-row">
     <div class="avatar" style="background:${t.ac}">${initials}</div>
@@ -765,7 +835,7 @@ function buildProfile(){
       <div style="font-size:15px;font-weight:600;color:${t.tx};overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(displayName)}</div>
       <div style="font-size:12px;color:${t.st};overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(currentUser?.email||'')}</div>
     </div>
-    <button onclick="confirmSignOut()" style="background:none;border:none;color:${t.st};font-size:20px;cursor:pointer" title="Sign out"><i class="ti ti-logout"></i></button>
+    <button onclick="confirmSignOut()" style="background:rgba(214,69,69,.1);border:none;border-radius:8px;padding:6px 10px;color:#D64545;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:4px;flex-shrink:0"><i class="ti ti-logout" style="font-size:14px"></i>Sign Out</button>
   </div>
   <div class="level-card">
     <div style="display:flex;justify-content:space-between;align-items:flex-start">
