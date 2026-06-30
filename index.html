@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="OtterQuests">
@@ -178,8 +181,12 @@ setTimeout(function() {
     document.getElementById('screen').innerHTML =
       '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;padding:32px;text-align:center;gap:14px;font-family:system-ui">' +
       '<div style="font-size:36px">⚠️</div>' +
-      '<div style="font-size:17px;font-weight:600;color:#1C1C1E">Failed to load</div>' +
-      '<div style="font-size:14px;color:#7A7A7E;line-height:1.6">Could not connect to Firebase.<br>Check that your internet connection is working and that the config keys in index.html are correct.</div>' +
+      '<div style="font-size:17px;font-weight:600;color:#1C1C1E">Failed to connect</div>' +
+      '<div style="font-size:14px;color:#7A7A7E;line-height:1.7">Possible causes:<br>' +
+      '1. Firebase config keys are wrong in index.html<br>' +
+      '2. Email/Password not enabled in Firebase console<br>' +
+      '3. <b>upanshuv.github.io</b> not in Firebase Auth → Authorized Domains<br>' +
+      '4. Your internet connection dropped</div>' +
       '<button onclick="location.reload()" style="padding:12px 24px;background:#7C5CBF;color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;margin-top:8px">Try Again</button>' +
       '</div>';
   }
@@ -931,7 +938,7 @@ function buildJoinSheet(){
 function esc(s){const d=document.createElement('div');d.textContent=s||'';return d.innerHTML;}
 
 // ─── SERVICE WORKER ──────────────────────────────────────────────────────────
-if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
+if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).catch(()=>{});
 </script>
 </body>
 </html>
