@@ -17,7 +17,7 @@
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
-body{display:flex;flex-direction:column;background:#f0f0f0}
+body{display:flex;flex-direction:column;background:var(--bg,#f0f0f0)}
 #app{display:flex;flex-direction:column;height:100%;max-width:430px;margin:0 auto;background:var(--bg,#fff);position:relative;overflow:hidden;box-shadow:0 0 40px rgba(0,0,0,.12)}
 #screen{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
 #tabbar{display:flex;border-top:0.5px solid var(--border,rgba(0,0,0,.08));background:var(--sf,#F5F5F5);padding-bottom:max(env(safe-area-inset-bottom),8px);flex-shrink:0}
@@ -61,7 +61,7 @@ button{cursor:pointer;font-family:inherit}
 .seg-btn{flex:1;padding:6px 0;border:none;border-radius:6px;font-size:13px;cursor:pointer;background:transparent;color:var(--tx,#1C1C1E);font-weight:400}
 .seg-btn.active{background:var(--sf,#F5F5F5);font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.06)}
 .overlay{position:absolute;inset:0;background:rgba(0,0,0,.45);z-index:50;display:flex;align-items:flex-end}
-.sheet{background:var(--sf,#F5F5F5);border-radius:20px 20px 0 0;padding:16px;width:100%;max-height:90vh;overflow-y:auto;padding-bottom:max(env(safe-area-inset-bottom),24px)}
+.sheet{position:relative;z-index:51;background:var(--sf,#F5F5F5);border-radius:20px 20px 0 0;padding:16px;width:100%;max-height:90vh;overflow-y:auto;padding-bottom:max(env(safe-area-inset-bottom),24px)}
 .sheet-handle{width:36px;height:4px;border-radius:2px;background:rgba(0,0,0,.15);margin:0 auto 14px}
 .sheet-title{font-size:17px;font-weight:600;color:var(--tx,#1C1C1E);text-align:center;margin-bottom:16px}
 .form-group{margin-bottom:12px}
@@ -167,7 +167,7 @@ html,body{height:100%;overflow:hidden}
     <button class="tab-btn" id="tb-shop" onclick="switchTab('shop')"><i class="ti ti-shopping-cart"></i>Shop</button>
     <button class="tab-btn" id="tb-profile" onclick="switchTab('profile')"><i class="ti ti-user-circle"></i>Profile</button>
   </div>
-  <div id="ov" style="display:none;position:absolute;inset:0;background:rgba(0,0,0,.45);z-index:50;align-items:flex-end">
+  <div id="ov" style="display:none;position:absolute;inset:0;background:rgba(0,0,0,.45);z-index:50;align-items:flex-end;background:var(--overlay,rgba(0,0,0,.45))">
     <div style="position:absolute;inset:0" onclick="closeSheet()"></div>
     <div id="sheet-body" class="sheet" onclick="event.stopPropagation()"></div>
   </div>
@@ -208,13 +208,13 @@ import { getFirestore, doc, setDoc, getDoc, updateDoc,
 // ─────────────────────────────────────────────
 const firebaseConfig = {
   apiKey: "AIzaSyB-6fhgsx-mcxnjkaN-qE89wijdm0QFzgs",
-  authDomain: "otterlist-99628.firebaseapp.com",
-  projectId: "otterlist-99628",
-  storageBucket: "otterlist-99628.firebasestorage.app",
+  authDomain: "otterquests-99628.firebaseapp.com",
+  projectId: "otterquests-99628",
+  storageBucket: "otterquests-99628.firebasestorage.app",
   messagingSenderId: "990031384788",
-  appId: "1:990031384788:web:a7e14704c3ffdfbd776b41",
-  measurementId: "G-19KSR45T86"
+  appId: "1:990031384788:web:1209f326544c69ac776b41",
 };
+
 const fireApp = initializeApp(firebaseConfig);
 const auth    = getAuth(fireApp);
 const db      = getFirestore(fireApp);
@@ -297,6 +297,7 @@ function applyTheme(){
   r.setProperty('--ac',t.ac);
   const isDark=t.bg==='#1C1C1E'||t.bg==='#0F2A2E';
   r.setProperty('--border',isDark?'rgba(255,255,255,.12)':'rgba(0,0,0,.08)');
+  r.setProperty('--overlay',isDark?'rgba(0,0,0,.65)':'rgba(0,0,0,.45)');
   document.getElementById('themeColorMeta').content=t.ac;
   document.getElementById('app').style.background=t.bg;
   const tb=document.getElementById('tabbar');
