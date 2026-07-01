@@ -345,20 +345,33 @@ async function saveProfile(){
 
 async function fsAddQuest(quest){
   if(!currentUser) return;
-  if(quest.groupId){
-    // Store in the group so all members see it
-    await setDoc(doc(db,'groups',quest.groupId,'quests',quest.id), quest);
-  } else {
-    await setDoc(doc(db,'users',currentUser.uid,'quests',quest.id), quest);
+  try {
+    if(quest.groupId){
+      await setDoc(doc(db,'groups',quest.groupId,'quests',quest.id), quest);
+    } else {
+      await setDoc(doc(db,'users',currentUser.uid,'quests',quest.id), quest);
+    }
+  } catch(e){
+    console.error('fsAddQuest error:', e.code, e.message);
+    if(e.code==='permission-denied'){
+      showToast('⚠️ Firestore rules are blocking group quests. Update rules in Firebase console — see firestore.rules file.');
+    }
   }
 }
 
 async function fsUpdateQuest(quest){
   if(!currentUser) return;
-  if(quest.groupId){
-    await setDoc(doc(db,'groups',quest.groupId,'quests',quest.id), quest);
-  } else {
-    await setDoc(doc(db,'users',currentUser.uid,'quests',quest.id), quest);
+  try {
+    if(quest.groupId){
+      await setDoc(doc(db,'groups',quest.groupId,'quests',quest.id), quest);
+    } else {
+      await setDoc(doc(db,'users',currentUser.uid,'quests',quest.id), quest);
+    }
+  } catch(e){
+    console.error('fsUpdateQuest error:', e.code, e.message);
+    if(e.code==='permission-denied'){
+      showToast('⚠️ Firebase rules are blocking this. Update Firestore rules in Firebase console.');
+    }
   }
 }
 
@@ -422,11 +435,16 @@ function listenToGroup(code){
     const unsub=onSnapshot(collection(db,'groups',code,'quests'),snapshot=>{
       // Remove all quests that belong to this group from local state
       S.quests=S.quests.filter(q=>q.groupId!==code);
-      // Add fresh from Firestore
+      // Add fresh from Firestore — this is the real-time magic
       snapshot.forEach(d=>{
         S.quests.push({...d.data(),id:d.id});
       });
       render();
+    }, err=>{
+      console.error('group quest listener error:', err.code, err.message);
+      if(err.code==='permission-denied'){
+        showToast('⚠️ Firebase rules are blocking group quests. Paste the rules from firestore.rules into Firebase console → Firestore → Rules.');
+      }
     });
     groupQuestListeners[code]=unsub;
   }
@@ -459,20 +477,22 @@ async function loadUserData(uid){
     // Load groups the user is in
     const codes=d.groupCodes||[];
     S.groups=[];
+    // Load group metadata first (no quest listeners yet)
     for(const code of codes){
       const gSnap=await getDoc(doc(db,'groups',code));
       if(gSnap.exists()){
         const gd=gSnap.data();
         S.groups.push({id:gd.id,name:gd.name,code,points:gd.members[uid]?.points||0,members:gd.members});
-        listenToGroup(code);
       }
     }
   }
-  // Load personal quests
+  // Load personal quests first so snapshot listeners can safely append on top
   const questsSnap=await getDocs(collection(db,'users',uid,'quests'));
   S.quests=questsSnap.docs.map(d=>({...d.data(),id:d.id}));
-  // Group quests are loaded via real-time listeners in listenToGroup()
-  // which was called above for each group the user is in.
+  // NOW start real-time group listeners — they will append group quests to S.quests
+  for(const group of S.groups){
+    listenToGroup(group.code);
+  }
 }
 
 // ─── AUTH ─────────────────────────────────────────────────────────────────────
@@ -614,15 +634,21 @@ window.toggleQuest=function(id){
   fsUpdateQuest(t); queueProfileSave(); render();
 };
 window.deleteQuest=function(id){
-  // Remove locally immediately for snappy UI, Firestore listener will confirm
+  // CRITICAL: find the quest BEFORE filtering it out, so we know its groupId
   const quest = S.quests.find(q=>q.id===id);
-  S.quests=S.quests.filter(x=>x.id!==id);
-  // fsDeleteQuest handles both personal and group paths
-  // For group quests, this triggers onSnapshot on all members → they see it disappear
-  fsDeleteQuest(id);
-  if(quest) {
-    // If it's a group quest, the real-time listener will have already removed it.
-    // If personal, we removed it above. Either way re-render.
+  const groupId = quest ? quest.groupId : null;
+  // Remove locally for instant UI response
+  S.quests = S.quests.filter(x=>x.id!==id);
+  // Delete from correct Firestore path using the groupId we captured above
+  if(groupId){
+    // Group quest → delete from groups/{code}/quests/{id}
+    // This fires onSnapshot on ALL members → quest disappears from everyone's screen
+    deleteDoc(doc(db,'groups',groupId,'quests',id))
+      .catch(e=>console.error('group quest delete failed:',e));
+  } else {
+    // Personal quest → delete from users/{uid}/quests/{id}
+    deleteDoc(doc(db,'users',currentUser.uid,'quests',id))
+      .catch(e=>console.error('personal quest delete failed:',e));
   }
   render();
 };
@@ -719,6 +745,16 @@ window.shiftWeek=function(n){selectedDate=addDays(selectedDate,n*7);render();};
 window.shiftMonth=function(n){const d=parseDate(selectedDate);d.setMonth(d.getMonth()+n);selectedDate=fmtDate(d);render();};
 
 // ─── SHEET UTIL ───────────────────────────────────────────────────────────────
+function showToast(msg){
+  let t=document.getElementById('toast');
+  if(!t){t=document.createElement('div');t.id='toast';
+    t.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:10px 18px;border-radius:20px;font-size:13px;z-index:999;max-width:90%;text-align:center;box-shadow:0 4px 16px rgba(0,0,0,.3)';
+    document.getElementById('app').appendChild(t);}
+  t.textContent=msg; t.style.display='block';
+  clearTimeout(t._timer);
+  t._timer=setTimeout(()=>t.style.display='none',5000);
+}
+
 function showSheet(html){
   const ov=document.getElementById('ov');
   const body=document.getElementById('sheet-body');
