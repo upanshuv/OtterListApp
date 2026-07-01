@@ -268,7 +268,8 @@ let selectedDate  = todayKey();
 let profileView   = 'main';     // main | groupDetail
 let selGroupCode  = null;
 let shopCat       = 'theme';
-let groupListeners= {};         // code -> unsubscribe fn
+let groupListeners= {};         // code -> unsubscribe fn (group doc)
+let groupQuestListeners={};     // code -> unsubscribe fn (group quests)
 
 let S = {
   quests:[], groups:[], rocks:0, totalXP:0, xpToday:0, lastXPDate:'',
@@ -339,17 +340,36 @@ async function saveProfile(){
 }
 
 // ─── FIRESTORE: QUESTS ─────────────────────────────────────────────────────────
+// Personal quests → users/{uid}/quests/{id}
+// Group quests    → groups/{code}/quests/{id}  (shared across all members)
+
 async function fsAddQuest(quest){
   if(!currentUser) return;
-  await setDoc(doc(db,'users',currentUser.uid,'quests',quest.id),quest);
+  if(quest.groupId){
+    // Store in the group so all members see it
+    await setDoc(doc(db,'groups',quest.groupId,'quests',quest.id), quest);
+  } else {
+    await setDoc(doc(db,'users',currentUser.uid,'quests',quest.id), quest);
+  }
 }
+
 async function fsUpdateQuest(quest){
   if(!currentUser) return;
-  await setDoc(doc(db,'users',currentUser.uid,'quests',quest.id),quest);
+  if(quest.groupId){
+    await setDoc(doc(db,'groups',quest.groupId,'quests',quest.id), quest);
+  } else {
+    await setDoc(doc(db,'users',currentUser.uid,'quests',quest.id), quest);
+  }
 }
+
 async function fsDeleteQuest(questId){
   if(!currentUser) return;
-  await deleteDoc(doc(db,'users',currentUser.uid,'quests',questId));
+  const quest = S.quests.find(q=>q.id===questId);
+  if(quest && quest.groupId){
+    await deleteDoc(doc(db,'groups',quest.groupId,'quests',questId));
+  } else {
+    await deleteDoc(doc(db,'users',currentUser.uid,'quests',questId));
+  }
 }
 
 // ─── FIRESTORE: GROUPS ───────────────────────────────────────────────────────
@@ -381,28 +401,47 @@ async function fsJoinGroup(code){
   return localGroup;
 }
 function listenToGroup(code){
-  if(groupListeners[code]) return;
-  const unsub=onSnapshot(doc(db,'groups',code),snap=>{
-    if(!snap.exists()) return;
-    const data=snap.data();
-    const local=S.groups.find(g=>g.code===code);
-    if(local){
-      local.name=data.name;
-      local.members=data.members;
-      local.points=data.members[currentUser?.uid]?.points||0;
-    }
-    render();
-  });
-  groupListeners[code]=unsub;
+  // ── Listen to the group doc (name, members, leaderboard points) ──
+  if(!groupListeners[code]){
+    const unsub=onSnapshot(doc(db,'groups',code),snap=>{
+      if(!snap.exists()) return;
+      const data=snap.data();
+      const local=S.groups.find(g=>g.code===code);
+      if(local){
+        local.name=data.name;
+        local.members=data.members;
+        local.points=data.members[currentUser?.uid]?.points||0;
+      }
+      render();
+    });
+    groupListeners[code]=unsub;
+  }
+
+  // ── Listen to the group's quests collection (shared across all members) ──
+  if(!groupQuestListeners[code]){
+    const unsub=onSnapshot(collection(db,'groups',code,'quests'),snapshot=>{
+      // Remove all quests that belong to this group from local state
+      S.quests=S.quests.filter(q=>q.groupId!==code);
+      // Add fresh from Firestore
+      snapshot.forEach(d=>{
+        S.quests.push({...d.data(),id:d.id});
+      });
+      render();
+    });
+    groupQuestListeners[code]=unsub;
+  }
 }
 async function addGroupPoint(code){
   if(!currentUser||!code) return;
   try {
+    // Only award to the person who checked it off — read current value then increment
     const snap=await getDoc(doc(db,'groups',code));
     if(!snap.exists()) return;
     const data=snap.data();
     const cur=(data.members[currentUser.uid]?.points||0)+1;
-    await updateDoc(doc(db,'groups',code),{[`members.${currentUser.uid}.points`]:cur});
+    await updateDoc(doc(db,'groups',code),{
+      [`members.${currentUser.uid}.points`]:cur
+    });
   } catch(e){console.warn('group point failed',e);}
 }
 
@@ -429,9 +468,11 @@ async function loadUserData(uid){
       }
     }
   }
-  // Load quests
+  // Load personal quests
   const questsSnap=await getDocs(collection(db,'users',uid,'quests'));
   S.quests=questsSnap.docs.map(d=>({...d.data(),id:d.id}));
+  // Group quests are loaded via real-time listeners in listenToGroup()
+  // which was called above for each group the user is in.
 }
 
 // ─── AUTH ─────────────────────────────────────────────────────────────────────
@@ -501,7 +542,9 @@ async function doSignIn(){
 async function doSignOut(){
   closeSheet();
   Object.values(groupListeners).forEach(u=>u());
+  Object.values(groupQuestListeners).forEach(u=>u());
   groupListeners={};
+  groupQuestListeners={};
   S={quests:[],groups:[],rocks:0,totalXP:0,xpToday:0,lastXPDate:'',
     ownedThemes:['white','cream','dark'],ownedIcons:['check'],equippedTheme:'white',equippedIcon:'check'};
   await signOut(auth);
@@ -541,18 +584,47 @@ window.toggleQuest=function(id){
   if(t.isDone){
     const today=todayKey();
     if(S.lastXPDate!==today){S.xpToday=0;S.lastXPDate=today;}
-    if(!t.xpClaimed&&S.xpToday<10){t.xpClaimed=true;S.xpToday++;S.totalXP++;}
-    const onTime=!t.time||(new Date()<=timeDate(t.date,t.time));
-    if(!t.rewardClaimed&&onTime){
-      t.rewardClaimed=true; S.rocks++;
-      if(t.groupId) addGroupPoint(t.groupId);
+
+    if(t.groupId){
+      // GROUP QUEST: only the person who checks it off gets group points.
+      // No rocks or XP from group quests — group points are a separate currency.
+      // Record who completed it so other devices show it as done.
+      t.completedBy = currentUser.uid;
+      t.completedByName = currentUser.displayName || currentUser.email.split('@')[0];
+      // Only award group points once, only to the checker
+      if(!t.groupPointsClaimed){
+        t.groupPointsClaimed = true;
+        addGroupPoint(t.groupId);
+      }
+    } else {
+      // PERSONAL QUEST: XP + rocks as before
+      if(!t.xpClaimed&&S.xpToday<10){t.xpClaimed=true;S.xpToday++;S.totalXP++;}
+      const onTime=!t.time||(new Date()<=timeDate(t.date,t.time));
+      if(!t.rewardClaimed&&onTime){
+        t.rewardClaimed=true; S.rocks++;
+      }
+    }
+  } else {
+    // Un-checking a group quest — clear the completedBy info
+    if(t.groupId){
+      t.completedBy = null;
+      t.completedByName = null;
     }
   }
   fsUpdateQuest(t); queueProfileSave(); render();
 };
 window.deleteQuest=function(id){
+  // Remove locally immediately for snappy UI, Firestore listener will confirm
+  const quest = S.quests.find(q=>q.id===id);
   S.quests=S.quests.filter(x=>x.id!==id);
-  fsDeleteQuest(id); render();
+  // fsDeleteQuest handles both personal and group paths
+  // For group quests, this triggers onSnapshot on all members → they see it disappear
+  fsDeleteQuest(id);
+  if(quest) {
+    // If it's a group quest, the real-time listener will have already removed it.
+    // If personal, we removed it above. Either way re-render.
+  }
+  render();
 };
 function timeDate(dk,ts){const[h,m]=ts.split(':').map(Number);const d=parseDate(dk);d.setHours(h,m,0,0);return d;}
 
@@ -572,9 +644,12 @@ window.confirmAdd=async function(){
   const quest={id:uid(),title,date:selectedDate,isDone:false,
     priority:draft.priority,category:draft.category||null,
     groupId:draft.groupId||null,
+    createdBy:currentUser?.uid||null,
     time:draft.hasTime?draft.time:null,
     notify:draft.hasTime&&draft.notify,
-    rewardClaimed:false,xpClaimed:false};
+    rewardClaimed:false,xpClaimed:false,
+    groupPointsClaimed:false,
+    completedBy:null,completedByName:null};
   S.quests.push(quest);
   await fsAddQuest(quest);
   if(quest.notify&&quest.time&&'Notification' in window&&Notification.permission==='granted'){
@@ -774,9 +849,10 @@ function buildQuestRow(tk){
         ${tk.time?`<span style="font-size:11px;color:${t.st};display:flex;align-items:center;gap:3px">${tk.notify?'<i class="ti ti-bell" style="font-size:10px"></i>':''} ${tk.time}</span>`:''}
         ${tk.category?`<span class="cat-pill">${esc(tk.category)}</span>`:''}
         ${g?`<span style="font-size:11px;color:${t.ac};display:flex;align-items:center;gap:3px"><i class="ti ti-users" style="font-size:10px"></i>${esc(g.name)}</span>`:''}
+        ${tk.isDone&&tk.completedByName?`<span style="font-size:10px;color:${t.st}">✓ ${esc(tk.completedByName)}</span>`:''}
       </div>
     </div>
-    <button onclick="event.stopPropagation();deleteQuest('${tk.id}')" style="background:rgba(214,69,69,.12);border:none;border-radius:8px;color:#D64545;font-size:13px;font-weight:600;padding:6px 10px;align-self:center;flex-shrink:0;display:flex;align-items:center;gap:3px"><i class="ti ti-trash" style="font-size:15px"></i>Del</button>
+    ${!tk.groupId||tk.createdBy===currentUser?.uid?`<button onclick="event.stopPropagation();deleteQuest('${tk.id}')" style="background:rgba(214,69,69,.12);border:none;border-radius:8px;color:#D64545;font-size:13px;font-weight:600;padding:6px 10px;align-self:center;flex-shrink:0;display:flex;align-items:center;gap:3px"><i class="ti ti-trash" style="font-size:15px"></i>Del</button>`:''}
   </div>`;
 }
 
